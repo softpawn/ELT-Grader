@@ -16,7 +16,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; }
-    body { background: #f0f4f8; color: #1a202c; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: #f0f4f8; color: #1a202c; font-family: 'Apple SD Gothic Neo','Malgun Gothic',sans-serif; -webkit-tap-highlight-color: transparent; }
     input, select, button { font-family: inherit; }
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
@@ -29,7 +29,10 @@
 <script type="text/babel">
 const { useState, useRef } = React;
 
-const AK = {
+// ─────────────────────────────────────────────────────────────
+// FINAL TEST ANSWER KEYS (A~F forms)
+// ─────────────────────────────────────────────────────────────
+const FINAL_KEYS = {
   K8T2A4:{A:{1:9,2:32,3:29,4:30,5:23,6:5,7:11,8:17,9:8,10:10,11:28,12:16,13:27,14:42,15:13,16:31,17:33,18:6,19:24,20:22,21:46,22:36,23:25,24:3,25:45},B:{26:["Army Community Service","육군복지체계"],27:["Combat Life Saver","야전응급조치요원"],28:["Modular Lightweight Load-carrying Equipment","모듈형 전투배낭"],29:["Opposing Forces","대항군"],30:["Transportation Motor Pool","수송부"],31:["Executive Officer","보좌관, 선임장교"],32:["Directorate of Public Works","시설물 관리처"],33:["Table of Organization and Equipment","편제장비표"],34:["For Official Use Only","대외비"],35:["Standard(Standing) Operating Procedure","예규"],36:["Uniform Code of Military Justice","군인복무규율"],37:["Assembly Area","집결지"],38:["Troop Leading Procedures","부대지휘절차"],39:["Better Opportunities for Single Soldiers","독신장병 복지향상제도"],40:["Logistics Support Area","숙영지역"],41:["Major Subordinate Command","주요 예하 사령부"],42:["Tactical Operations Center","전술작전본부"],43:["Command Post Theater Air, Naval, Ground Operations","전구 작전지휘소"],44:["Area of Responsibility","책임지역"],45:["Squad Automatic Weapon","분대자동화기"],46:["Provost Marshall","헌병 대장 (참모)"],47:["Rehearsal of Concept Drill","훈련개념발전 예행연습"],48:["Charge of Quarters","당직"],49:["Defense Switched Network","미국방교환망"],50:["Basic Issue Item","기본지급품목"]},C:{51:"F",52:"T",53:"F",54:"F",55:"F",56:"T",57:"F",58:"F",59:"F",60:"F",61:"T",62:"F",63:"F",64:"F",65:"T",66:"F",67:"F",68:"F",69:"T",70:"F",71:"T",72:"F",73:"F",74:"F",75:"T",76:"F",77:"F",78:"T",79:"F",80:"T"},D:{81:"established rules of military courtesy",82:"Uniform must not be defamed",83:"may be permitted to lower",84:"Never avoid retreat",85:"pay homage and respect to",86:"now and then",87:"convict themselves of ignorance",88:"going over an officer",89:"should first have been presented to",90:"to be avoided",91:"nothing good to say about a person",92:"is expected to be",93:"they exclude the use of vulgarity and profanity",94:"Never lean on a senior officer",95:"unless invited to be seated",96:"when notified to do so",97:"go on the double",98:"when not in formation",99:"is not permitted",100:"should be sensitive to the rights of others"}},
   K9T7B1:{A:{1:18,2:47,3:26,4:34,5:42,6:49,7:17,8:21,9:10,10:50,11:25,12:7,13:41,14:9,15:23,16:43,17:15,18:6,19:20,20:39,21:46,22:11,23:16,24:36,25:45},B:{26:["Defense Readiness Condition","데프콘(방어준비태세)"],27:["Controlled Unclassified Information","비공개 군사 자료"],28:["Fighting Load Carrier","야전전투조끼"],29:["High Mobility Multipurpose Wheeled Vehicle","다목적 전술차량/험비"],30:["Communication Security","통신보안"],31:["Area of Responsibility","책임지역"],32:["In Accordance With","~에 의거"],33:["Public Affairs Office","공보실"],34:["Operational Control","작전 통제(작통)"],35:["Emergency Operations Center","비상작전본부"],36:["Warning Order","준비명령"],37:["Quarterly Training Brief","분기별 훈련보고"],38:["Traffic Control Point","교통통제소"],39:["North Korea Army/North Korea People's Army","북한군"],40:["United Nations Command","유엔군 사령부"],41:["Ground Operations Command","지상작전 사령부(지작사)"],42:["Watch Condition","정보감시태세"],43:["Advanced Combat Helmet","방탄모 (개량형)"],44:["Field Artillery","야전포병"],45:["Headquarters, Department of the Army","미육군 본부"],46:["Releasable to Republic of Korea","한측 공개가능"],47:["Improvised Explosive Device","급조폭발물"],48:["Combined Arms Live Fire Exercise","제병협동 실사격훈련"],49:["In Process Review (Report)","중간검토 (보고)"],50:["Code of Conduct","복무신조"]},C:{51:"F",52:"F",53:"F",54:"F",55:"T",56:"F",57:"F",58:"F",59:"T",60:"F",61:"T",62:"F",63:"F",64:"F",65:"T",66:"F",67:"F",68:"F",69:"T",70:"F",71:"F",72:"T",73:"T",74:"F",75:"F",76:"T",77:"F",78:"T",79:"F",80:"F"},D:{81:"taboos things to avoid doing",82:"conduct unbecoming an officer",83:"may be permitted to lower",84:"thoughtless people",85:"it includes",86:"to pay respect to our flag and our anthem",87:"the jumping of an echelon of command",88:"should first have been presented to",89:"harsh remarks",90:"nothing about that individual",91:"avoid vulgarity and profanity",92:"is expected to be",93:"however the traditional terms are defined",94:"never lean on a senior officer",95:"unless invited to be seated",96:"report at once",97:"when called by a senior officer",98:"Army taboo against",99:"The Army officially discourages smoking",100:"should be sensitive to the rights of others"}},
   R3V9C3:{A:{1:9,2:32,3:29,4:30,5:23,6:5,7:11,8:17,9:8,10:10,11:28,12:16,13:27,14:42,15:13,16:31,17:33,18:6,19:24,20:22,21:46,22:36,23:25,24:3,25:45},B:{26:["Assembly Area","집결지"],27:["Army Commendation Medal","육군 표창훈장"],28:["Common Access Card / Community Activity Center","전산망접속카드 / 공동활용센터"],29:["United Nations Command","유엔군 사령부"],30:["Psychological Operations","심리작전"],31:["Readiness Condition","준비태세"],32:["Change of Command / Code of Conduct","지휘관 이취임 / 복무신조"],33:["Course of Action","방책"],34:["Command Post Theater Air, Naval, Ground Operations","전구 공해지 작전지휘소"],35:["Mission Essential Civilian","임무 필수 민간인"],36:["Passengers/Personnel","~명 (세는 단위)"],37:["Force Protection Condition","부대 방호 태세(의 등급)"],38:["Chief of Staff","참모장"],39:["All Concerned","관계자 전원"],40:["Platoon Sergeant","부소대장"],41:["Releasable to Republic of Korea","한측 공개가능"],42:["Army in Korea","주한미육군"],43:["Personnel Daily Summary","일일병력 요약 보고"],44:["Serious Incident Report","주요사건보고"],45:["Equal Opportunity","기회균등"],46:["Controlled Unclassified Information","비공개 군사 자료"],47:["Emergency Operations Center","비상작전본부"],48:["Improvised Explosive Device","급조폭발물"],49:["Field Artillery","야전포병"],50:["Reception, Staging, Onward Movement, and Integration","연합 전시증원"]},C:{51:"T",52:"T",53:"F",54:"F",55:"F",56:"T",57:"T",58:"F",59:"T",60:"F",61:"T",62:"F",63:"F",64:"T",65:"T",66:"F",67:"F",68:"F",69:"T",70:"F",71:"T",72:"F",73:"T",74:"F",75:"T",76:"F",77:"F",78:"T",79:"T",80:"T"},D:{81:"the established rules of military courtesy",82:"Uniform must not be defamed",83:"may be permitted to lower",84:"Never avoid retreat",85:"pay homage and respect to",86:"now and then",87:"convict themselves of ignorance",88:"going over an officer",89:"should first have been presented to",90:"to be avoided",91:"nothing good to say about a person",92:"is expected to be",93:"they exclude the use of vulgarity and profanity",94:"Never lean on a senior officer",95:"unless invited to be seated",96:"when notified to do so",97:"go on the double",98:"when not in formation",99:"is not permitted",100:"should be sensitive to the rights of others"}},
@@ -37,12 +40,56 @@ const AK = {
   T7A3E7:{A:{1:47,2:8,3:36,4:12,5:5,6:41,7:19,8:29,9:3,10:50,11:11,12:44,13:13,14:35,15:9,16:16,17:31,18:18,19:30,20:20,21:21,22:40,23:23,24:46,25:25},B:{26:["Preventive Maintenance Checks & Services","예방정비 검사 및 지원"],27:["Expiration Term of Service/Estimated Time of Separation","전역일자"],28:["Fragmentary Order","단편명령"],29:["Battle Damage Assessment","전투피해평가"],30:["Weapons of Mass Destruction","대량살상무기"],31:["Ulchi Freedom Shield","을지자유방패 연습"],32:["Emergency Deployment Readiness Exercise","비상전개 준비태세훈련"],33:["Sexual Harassment/Assault Response and Prevention","샤프(성범죄 대응 및 예방 프로그램)"],34:["Major Subordinate Command","주요 예하 사령부"],35:["After Action Review","사후 강평"],36:["Unit Basic Load","부대 기본휴대량"],37:["Situation Report","상황보고"],38:["Prisoner of War","전쟁포로"],39:["Army Post Office","육군 군사우체국"],40:["Line of Communication","병참선"],41:["Government Owned Vehicle","관용차량"],42:["Liaison Officer","연락장교"],43:["Warning Order","준비명령"],44:["Life Support Area","숙영지역"],45:["Modular Lightweight Load-carrying Equipment","모듈형 전투장비세트"],46:["Concept of Operations","작전개념"],47:["Main Supply Route","주 보급로"],48:["Headquarters and Headquarters Company","(본부 및) 본부 중대"],49:["Charge of Quarters","당직"],50:["Time in Service","복무기간"]},C:{51:"F",52:"F",53:"F",54:"T",55:"T",56:"F",57:"T",58:"T",59:"F",60:"T",61:"T",62:"T",63:"F",64:"F",65:"F",66:"T",67:"F",68:"T",69:"T",70:"F",71:"F",72:"F",73:"F",74:"T",75:"F",76:"F",77:"T",78:"T",79:"F",80:"F"},D:{81:"positive actions",82:"The following are some",83:"Conduct unbecoming an officer",84:"in the integrity and high standards",85:"may be permitted to lower",86:"pay homage and respect to",87:"thoughtless people",88:"merely convict themselves of ignorance",89:"The jumping of an echelon of command",90:"should first have been presented to",91:"In casual conversation",92:"larded with",93:"however the traditional terms are defined",94:"unless invited to be seated",95:"Report at once",96:"On the drill field",97:"go on the double",98:"when not in formation",99:"is not permitted",100:"should be sensitive to the rights of others"}},
   T9N1F4:{A:{1:12,2:13,3:49,4:50,5:3,6:23,7:24,8:20,9:40,10:41,11:28,12:2,13:16,14:37,15:39,16:48,17:17,18:43,19:42,20:22,21:27,22:31,23:14,24:1,25:25},B:{26:["Assembly Area","집결지"],27:["Army Commendation Medal","육군 표창훈장"],28:["Common Access Card / Community Activity Center","전산망접속카드 / 공동활용센터"],29:["United Nations Command","유엔군 사령부"],30:["Psychological Operations","심리작전"],31:["Readiness Condition","준비태세"],32:["Change of Command / Code of Conduct","지휘관 이취임 / 복무신조"],33:["Course of Action","방책"],34:["Command Post Theater Air, Naval, Ground Operations","전구 공해지 작전지휘소"],35:["Mission Essential Civilian","임무 필수 민간인"],36:["Passengers/Personnel","~명 (세는 단위)"],37:["Force Protection Condition","부대 방호 태세(의 등급)"],38:["Chief of Staff","참모장"],39:["All Concerned","관계자 전원"],40:["Platoon Sergeant","부소대장"],41:["Releasable to Republic of Korea","한측 공개가능"],42:["Army in Korea","주한미육군"],43:["Personnel Daily Summary","일일병력 요약 보고"],44:["Serious Incident Report","주요사건보고"],45:["Equal Opportunity","기회균등"],46:["Controlled Unclassified Information","비공개 군사 자료"],47:["Emergency Operations Center","비상작전본부"],48:["Improvised Explosive Device","급조폭발물"],49:["Field Artillery","야전포병"],50:["Reception, Staging, Onward Movement, and Integration","연합 전시증원"]},C:{51:"T",52:"F",53:"F",54:"T",55:"T",56:"T",57:"F",58:"T",59:"T",60:"F",61:"T",62:"T",63:"F",64:"F",65:"T",66:"T",67:"F",68:"T",69:"T",70:"F",71:"F",72:"T",73:"T",74:"T",75:"F",76:"T",77:"T",78:"T",79:"F",80:"T"},D:{81:"established usage",82:"rules of military courtesy",83:"in the integrity and high standards",84:"proud and willing to pay homage",85:"convict themselves of ignorance",86:"slink away from an opportunity",87:"the jumping of an echelon of command",88:"should first have been presented",89:"contrary to",90:"nothing good to say about",91:"wiser to say nothing",92:"Foul and vulgar",93:"is reprehensible",94:"resented by most officers and is unmilitary",95:"Report at once",96:"when called by a senior officer",97:"both authorized and proper",98:"both for reasons",99:"also is considered objectionable",100:"where smoking may be permitted"}}
 };
+const FINAL_LABELS = {K8T2A4:"Form A",K9T7B1:"Form B",R3V9C3:"Form C",R8M1D5:"Form D",T7A3E7:"Form E",T9N1F4:"Form F"};
 
-const FL = {K8T2A4:"Form A",K9T7B1:"Form B",R3V9C3:"Form C",R8M1D5:"Form D",T7A3E7:"Form E",T9N1F4:"Form F"};
+// ─────────────────────────────────────────────────────────────
+// ACRONYM QUIZ KEYS (List2 — 약어시험)
+// ─────────────────────────────────────────────────────────────
+const ACRONYM_KEYS = {
+  'FormA_Day2':[{no:1,abbr:'CIF',full:'Central Issue Facility',kor:'중앙장비지급소'},{no:2,abbr:'COC',full:'Change of Command',kor:'지휘관 이취임'},{no:3,abbr:'BDA',full:'Battle Damage Assessment',kor:'전투피해평가'},{no:4,abbr:'CQ',full:'Charge of Quarters',kor:'당직'},{no:5,abbr:'COMSEC',full:'Communication Security',kor:'통신보안'},{no:6,abbr:'CFC',full:'Combined Forces Command',kor:'연합사(한미연합군사령부)'},{no:7,abbr:'CASEVAC',full:'Casualty Evacuation',kor:'사상자 후송'},{no:8,abbr:'AK',full:'Army in Korea',kor:'주한미육군'},{no:9,abbr:'COA',full:'Course of Action',kor:'방책'},{no:10,abbr:'CALFEX',full:'Combined Arms Live Fire Exercise',kor:'제병협동 실사격훈련'},{no:11,abbr:'ARCOM',full:'Army Commendation Medal',kor:'육군 표창훈장'},{no:12,abbr:'CBRN',full:'Chemical, Biological, Radiological and Nuclear',kor:'화생방 및 핵'},{no:13,abbr:'AOR',full:'Area of Responsibility',kor:'책임지역'},{no:14,abbr:'Ammo',full:'Ammunition',kor:'탄약'},{no:15,abbr:'DEROS',full:'Date Eligible to Return from Overseas',kor:'귀국예정일'},{no:16,abbr:'BII',full:'Basic Issue Item',kor:'기본지급품목'},{no:17,abbr:'BOSS',full:'Better Opportunities for Single Soldiers',kor:'독신장병 복지향상제도'},{no:18,abbr:'AKO',full:'Army Knowledge Online',kor:'미육군 지식 포털사이트 접속체계/AKO'},{no:19,abbr:'ADCON',full:'Administrative Control',kor:'행정 통제'},{no:20,abbr:'CONPLAN',full:'Contingency Plan',kor:'우발계획'},{no:21,abbr:'CofS',full:'Chief of Staff',kor:'참모장'},{no:22,abbr:'AR',full:'Army Regulation',kor:'육군 규정'},{no:23,abbr:'ACH',full:'Advanced Combat Helmet',kor:'방탄모 (개량형)'},{no:24,abbr:'APO',full:'Army Post Office',kor:'육군 군사우체국'},{no:25,abbr:'ATP',full:'Alliance Training Plan',kor:'동맹훈련계획'}],
+  'FormA_Day3':[{no:1,abbr:'MBA',full:'Main Battle Area',kor:'주 전투지역'},{no:2,abbr:'IPR',full:'In Process Review (Report)',kor:'중간검토 (보고)'},{no:3,abbr:'EO',full:'Equal Opportunity',kor:'기회균등'},{no:4,abbr:'IOTV',full:'Improved Outer Tactical Vest',kor:'방탄조끼 (개량형)'},{no:5,abbr:'KATUSA',full:'Korean Augmentation to the US Army',kor:'카투사'},{no:6,abbr:'OPFOR',full:'Opposing Forces',kor:'대항군'},{no:7,abbr:'EOC',full:'Emergency Operations Center',kor:'비상작전본부'},{no:8,abbr:'MOLLE',full:'Modular Lightweight Load-carrying Equipment',kor:'모듈형 전투장비세트'},{no:9,abbr:'METL',full:'Mission Essential Task List',kor:'임무 필수과제 목록'},{no:10,abbr:'IFAK',full:'Individual First Aid Kit',kor:'야전구급키트 (개량형)'},{no:11,abbr:'NEO',full:'Noncombatant Evacuation Operation',kor:'비전투원 후송작전'},{no:12,abbr:'FM',full:'Field Manual',kor:'야전 교범'},{no:13,abbr:'IG',full:'Inspector General',kor:'감찰감, 감찰병과'},{no:14,abbr:'EDRE',full:'Emergency Deployment Readiness Exercise',kor:'비상전개 준비태세훈련'},{no:15,abbr:'ETS',full:'Expiration Term of Service/Estimated Time of Separation',kor:'전역일자'},{no:16,abbr:'HMMWV',full:'High Mobility Multipurpose Wheeled Vehicle',kor:'험비'},{no:17,abbr:'nKA/nKPA',full:'North Korea Army/North Korean People\'s Army',kor:'북한군'},{no:18,abbr:'FY',full:'Fiscal Year',kor:'회계연도'},{no:19,abbr:'JCS',full:'Joint Chiefs of Staff',kor:'합동참모본부'},{no:20,abbr:'DSN',full:'Defense Switched Network',kor:'미국방교환망'},{no:21,abbr:'FLC',full:'Fighting Load Carrier',kor:'야전전투조끼'},{no:22,abbr:'HHC',full:'Headquarters and Headquarters Company',kor:'(본부 및) 본부 중대'},{no:23,abbr:'LSA',full:'Life Support Area',kor:'숙영지역'},{no:24,abbr:'NFA',full:'No Fire Area',kor:'사격금지구역'},{no:25,abbr:'IED',full:'Improvised Explosive Device',kor:'급조폭발물'}],
+  'FormA_Day4':[{no:1,abbr:'POW',full:'Prisoner of War',kor:'전쟁포로'},{no:2,abbr:'PAO',full:'Public Affairs Office',kor:'공보실'},{no:3,abbr:'Ord',full:'Ordnance',kor:'병기'},{no:4,abbr:'PSG',full:'Platoon Sergeant',kor:'부소대장'},{no:5,abbr:'VTC',full:'Video Teleconference',kor:'원격 화상회의'},{no:6,abbr:'PAX',full:'Passengers/Personnel',kor:'~명 (세는 단위)'},{no:7,abbr:'TMP',full:'Transportation Motor Pool',kor:'수송부'},{no:8,abbr:'TBD',full:'To Be Determined',kor:'추후결정'},{no:9,abbr:'QTB',full:'Quarterly Training Brief',kor:'분기별 훈련보고'},{no:10,abbr:'WARNO',full:'Warning Order',kor:'준비명령'},{no:11,abbr:'RELROK',full:'Releasable to Republic of Korea',kor:'한측 공개가능'},{no:12,abbr:'TOC',full:'Tactical Operations Center',kor:'전술작전본부'},{no:13,abbr:'SOP',full:'Standard(Standing) Operating Procedure',kor:'예규'},{no:14,abbr:'PMCS',full:'Preventive Maintenance Checks & Services',kor:'예방정비 검사 및 지원'},{no:15,abbr:'REDCON',full:'Readiness Condition',kor:'준비태세'},{no:16,abbr:'PDS',full:'Personnel Daily Summary',kor:'일일병력 요약 보고'},{no:17,abbr:'SAW',full:'Squad Automatic Weapon',kor:'분대자동화기'},{no:18,abbr:'UNC',full:'United Nations Command',kor:'유엔군 사령부'},{no:19,abbr:'UCMJ',full:'Uniform Code of Military Justice',kor:'군인복무규율'},{no:20,abbr:'OPSEC',full:'Operations Security',kor:'작전 보안'},{no:21,abbr:'SITREP',full:'Situation Report',kor:'상황보고'},{no:22,abbr:'ROC Drill',full:'Rehearsal of Concept Drill',kor:'훈련개념발전 예행연습'},{no:23,abbr:'WATCHCON',full:'Watch Condition',kor:'정보감시태세'},{no:24,abbr:'USFK',full:'United States Forces Korea',kor:'주한미군'},{no:25,abbr:'RSOI',full:'Reception, Staging, Onward Movement, and Integration',kor:'연합 전시증원'}],
+  'FormB_Day2':[{no:1,abbr:'AR',full:'Army Regulation',kor:'육군 규정'},{no:2,abbr:'DEROS',full:'Date Eligible to Return from Overseas',kor:'귀국예정일'},{no:3,abbr:'CUI',full:'Controlled Unclassified Information',kor:'비공개 군사 자료'},{no:4,abbr:'COC',full:'Code of Conduct',kor:'복무신조'},{no:5,abbr:'AAR',full:'After Action Review',kor:'사후 강평'},{no:6,abbr:'DCO',full:'Deputy Commander',kor:'부지휘관, 부사령관'},{no:7,abbr:'AKO',full:'Army Knowledge Online',kor:'미육군 지식 포털사이트 접속체계/AKO'},{no:8,abbr:'BII',full:'Basic Issue Item',kor:'기본지급품목'},{no:9,abbr:'ACH',full:'Advanced Combat Helmet',kor:'방탄모 (개량형)'},{no:10,abbr:'ALCON',full:'All Concerned',kor:'관계자 전원'},{no:11,abbr:'AOI',full:'Area of Interest',kor:'관심지역'},{no:12,abbr:'CBRN',full:'Chemical, Biological, Radiological and Nuclear',kor:'화생방 및 핵'},{no:13,abbr:'DEFCON',full:'Defense Readiness Condition',kor:'데프콘(방어준비태세)'},{no:14,abbr:'COMSEC',full:'Communication Security',kor:'통신보안'},{no:15,abbr:'COC',full:'Change of Command',kor:'지휘관 이취임'},{no:16,abbr:'CPX',full:'Command Post Exercise',kor:'지휘소 연습'},{no:17,abbr:'COA',full:'Course of Action',kor:'방책'},{no:18,abbr:'CALFEX',full:'Combined Arms Live Fire Exercise',kor:'제병협동 실사격훈련'},{no:19,abbr:'CP TANGO',full:'Command Post Theater Air, Naval, Ground Operations',kor:'전구 공해지 작전지휘소'},{no:20,abbr:'CAC',full:'Community Activity Center',kor:'공동활용센터'},{no:21,abbr:'ARCOM',full:'Army Commendation Medal',kor:'육군 표창훈장'},{no:22,abbr:'CASEVAC',full:'Casualty Evacuation',kor:'사상자 후송'},{no:23,abbr:'BOSS',full:'Better Opportunities for Single Soldiers',kor:'독신장병 복지향상제도'},{no:24,abbr:'ADCON',full:'Administrative Control',kor:'행정 통제'},{no:25,abbr:'CAC',full:'Common Access Card',kor:'전산망접속카드'}],
+  'FormB_Day3':[{no:1,abbr:'EDRE',full:'Emergency Deployment Readiness Exercise',kor:'비상전개 준비태세훈련'},{no:2,abbr:'MBA',full:'Main Battle Area',kor:'주 전투지역'},{no:3,abbr:'METL',full:'Mission Essential Task List',kor:'임무 필수과제 목록'},{no:4,abbr:'IFAK',full:'Individual First Aid Kit',kor:'야전구급키트 (개량형)'},{no:5,abbr:'IOTV',full:'Improved Outer Tactical Vest',kor:'방탄조끼 (개량형)'},{no:6,abbr:'LOC',full:'Line of Communication',kor:'병참선'},{no:7,abbr:'FPCON',full:'Force Protection Condition',kor:'부대 방호 태세(의 등급)'},{no:8,abbr:'OPCON',full:'Operational Control',kor:'작전 통제(작통)'},{no:9,abbr:'DSN',full:'Defense Switched Network',kor:'미국방교환망'},{no:10,abbr:'HQDA',full:'Headquarters, Department of the Army',kor:'미육군 본부'},{no:11,abbr:'FLC',full:'Fighting Load Carrier',kor:'야전전투조끼'},{no:12,abbr:'EO',full:'Equal Opportunity',kor:'기회균등'},{no:13,abbr:'FY',full:'Fiscal Year',kor:'회계연도'},{no:14,abbr:'DPW',full:'Directorate of Public Works',kor:'시설물 관리처'},{no:15,abbr:'FS',full:'Freedom Shield',kor:'자유방패 연습'},{no:16,abbr:'HHC',full:'Headquarters and Headquarters Company',kor:'(본부 및) 본부 중대'},{no:17,abbr:'OP',full:'Observation Post',kor:'관측소'},{no:18,abbr:'2ID/RUCD',full:'2nd Infantry Division/ROK-US Combined Division',kor:'미2사단/연합사단'},{no:19,abbr:'GOC',full:'Ground Operations Command',kor:'지상작전 사령부(지작사)'},{no:20,abbr:'IAW',full:'In Accordance With',kor:'~에 의거'},{no:21,abbr:'MEC',full:'Mission Essential Civilian',kor:'임무 필수 민간인'},{no:22,abbr:'FM',full:'Field Manual',kor:'야전 교범'},{no:23,abbr:'FRAGO',full:'Fragmentary Order',kor:'단편명령'},{no:24,abbr:'NEO',full:'Noncombatant Evacuation Operation',kor:'비전투원 후송작전'},{no:25,abbr:'GOV',full:'Government Owned Vehicle',kor:'관용차량'}],
+  'FormB_Day4':[{no:1,abbr:'SHARP',full:'Sexual Harassment/Assault Response and Prevention',kor:'샤프(성범죄 대응 및 예방 프로그램)'},{no:2,abbr:'PMCS',full:'Preventive Maintenance Checks & Services',kor:'예방정비 검사 및 지원'},{no:3,abbr:'SOP',full:'Standard(Standing) Operating Procedure',kor:'예규'},{no:4,abbr:'OPSEC',full:'Operations Security',kor:'작전 보안'},{no:5,abbr:'Ord',full:'Ordnance',kor:'병기'},{no:6,abbr:'TTP',full:'Tactics, Techniques, and Procedures',kor:'전술, 전기 및 절차'},{no:7,abbr:'TLP',full:'Troop Leading Procedures',kor:'부대지휘절차'},{no:8,abbr:'REDCON',full:'Readiness Condition',kor:'준비태세'},{no:9,abbr:'QTB',full:'Quarterly Training Brief',kor:'분기별 훈련보고'},{no:10,abbr:'WARNO',full:'Warning Order',kor:'준비명령'},{no:11,abbr:'TIS',full:'Time in Service',kor:'복무기간'},{no:12,abbr:'RELROK',full:'Releasable to Republic of Korea',kor:'한측 공개가능'},{no:13,abbr:'RECON',full:'Reconnaissance',kor:'수색, 정찰'},{no:14,abbr:'POW',full:'Prisoner of War',kor:'전쟁포로'},{no:15,abbr:'ROC Drill',full:'Rehearsal of Concept Drill',kor:'훈련개념발전 예행연습'},{no:16,abbr:'VTC',full:'Video Teleconference',kor:'원격 화상회의'},{no:17,abbr:'ROE',full:'Rules of Engagement',kor:'교전규칙'},{no:18,abbr:'USFK',full:'United States Forces Korea',kor:'주한미군'},{no:19,abbr:'PSYOP',full:'Psychological Operations',kor:'심리작전'},{no:20,abbr:'SOI',full:'Signal Operating Instructions',kor:'통신운용지시'},{no:21,abbr:'PM',full:'Provost Marshal',kor:'헌병 대장 (참모)'},{no:22,abbr:'PDS',full:'Personnel Daily Summary',kor:'일일병력 요약 보고'},{no:23,abbr:'UBL',full:'Unit Basic Load',kor:'부대 기본휴대량'},{no:24,abbr:'TOC',full:'Tactical Operations Center',kor:'전술작전본부'},{no:25,abbr:'SOFA',full:'Status of Forces Agreement',kor:'주한미군 지위 협정'}],
+  'FormC_Day2':[{no:1,abbr:'CALFEX',full:'Combined Arms Live Fire Exercise',kor:'제병협동 실사격훈련'},{no:2,abbr:'CASEVAC',full:'Casualty Evacuation',kor:'사상자 후송'},{no:3,abbr:'Ammo',full:'Ammunition',kor:'탄약'},{no:4,abbr:'CONOPS',full:'Concept of Operations',kor:'작전개념'},{no:5,abbr:'ACH',full:'Advanced Combat Helmet',kor:'방탄모 (개량형)'},{no:6,abbr:'AK',full:'Army in Korea',kor:'주한미육군'},{no:7,abbr:'COMSEC',full:'Communication Security',kor:'통신보안'},{no:8,abbr:'CPX',full:'Command Post Exercise',kor:'지휘소 연습'},{no:9,abbr:'CofS',full:'Chief of Staff',kor:'참모장'},{no:10,abbr:'ALCON',full:'All Concerned',kor:'관계자 전원'},{no:11,abbr:'COC',full:'Code of Conduct',kor:'복무신조'},{no:12,abbr:'Cdr',full:'Commander',kor:'지휘관, 사령관'},{no:13,abbr:'AOI',full:'Area of Interest',kor:'관심지역'},{no:14,abbr:'DEROS',full:'Date Eligible to Return from Overseas',kor:'귀국예정일'},{no:15,abbr:'BOSS',full:'Better Opportunities for Single Soldiers',kor:'독신장병 복지향상제도'},{no:16,abbr:'CQ',full:'Charge of Quarters',kor:'당직'},{no:17,abbr:'ACS',full:'Army Community Service',kor:'육군복지체계/ACS'},{no:18,abbr:'ARCOM',full:'Army Commendation Medal',kor:'육군 표창훈장'},{no:19,abbr:'CG',full:'Commanding General',kor:'(장성급) 사령관'},{no:20,abbr:'COC',full:'Change of Command',kor:'지휘관 이취임'},{no:21,abbr:'AKO',full:'Army Knowledge Online',kor:'미육군 지식 포털사이트 접속체계/AKO'},{no:22,abbr:'ADCON',full:'Administrative Control',kor:'행정 통제'},{no:23,abbr:'DCO',full:'Deputy Commander',kor:'부지휘관, 부사령관'},{no:24,abbr:'DEFCON',full:'Defense Readiness Condition',kor:'데프콘(방어준비태세)'},{no:25,abbr:'CBRN',full:'Chemical, Biological, Radiological and Nuclear',kor:'화생방 및 핵'}],
+  'FormC_Day3':[{no:1,abbr:'NEO',full:'Noncombatant Evacuation Operation',kor:'비전투원 후송작전'},{no:2,abbr:'MOLLE',full:'Modular Lightweight Load-carrying Equipment',kor:'모듈형 전투장비세트'},{no:3,abbr:'IOTV',full:'Improved Outer Tactical Vest',kor:'방탄조끼 (개량형)'},{no:4,abbr:'IED',full:'Improvised Explosive Device',kor:'급조폭발물'},{no:5,abbr:'LOC',full:'Line of Communication',kor:'병참선'},{no:6,abbr:'nKA/nKPA',full:'North Korea Army/North Korean People\'s Army',kor:'북한군'},{no:7,abbr:'FY',full:'Fiscal Year',kor:'회계연도'},{no:8,abbr:'2ID/RUCD',full:'2nd Infantry Division/ROK-US Combined Division',kor:'미2사단/연합사단'},{no:9,abbr:'JCS',full:'Joint Chiefs of Staff',kor:'합동참모본부'},{no:10,abbr:'EIB',full:'Expert Infantry Badge',kor:'우수보병 기장'},{no:11,abbr:'HHC',full:'Headquarters and Headquarters Company',kor:'(본부 및) 본부 중대'},{no:12,abbr:'EDRE',full:'Emergency Deployment Readiness Exercise',kor:'비상전개 준비태세훈련'},{no:13,abbr:'KATUSA',full:'Korean Augmentation to the US Army',kor:'카투사'},{no:14,abbr:'MBA',full:'Main Battle Area',kor:'주 전투지역'},{no:15,abbr:'METL',full:'Mission Essential Task List',kor:'임무 필수과제 목록'},{no:16,abbr:'MSC',full:'Major Subordinate Command',kor:'주요 예하 사령부'},{no:17,abbr:'DOD',full:'Department of Defense',kor:'미국방부'},{no:18,abbr:'NFA',full:'No Fire Area',kor:'사격금지구역'},{no:19,abbr:'IPR',full:'In Process Review (Report)',kor:'중간검토 (보고)'},{no:20,abbr:'MEC',full:'Mission Essential Civilian',kor:'임무 필수 민간인'},{no:21,abbr:'MSR',full:'Main Supply Route',kor:'주 보급로'},{no:22,abbr:'FM',full:'Field Manual',kor:'야전 교범'},{no:23,abbr:'HMMWV',full:'High Mobility Multipurpose Wheeled Vehicle',kor:'험비'},{no:24,abbr:'FS',full:'Freedom Shield',kor:'자유방패 연습'},{no:25,abbr:'OPFOR',full:'Opposing Forces',kor:'대항군'}],
+  'FormC_Day4':[{no:1,abbr:'PSYOP',full:'Psychological Operations',kor:'심리작전'},{no:2,abbr:'RECON',full:'Reconnaissance',kor:'수색, 정찰'},{no:3,abbr:'PAO',full:'Public Affairs Office',kor:'공보실'},{no:4,abbr:'UNC',full:'United Nations Command',kor:'유엔군 사령부'},{no:5,abbr:'POC',full:'Point of Contact',kor:'연락처, 담당관'},{no:6,abbr:'TTP',full:'Tactics, Techniques, and Procedures',kor:'전술, 전기 및 절차'},{no:7,abbr:'UFS',full:'Ulchi Freedom Shield',kor:'을지자유방패 연습'},{no:8,abbr:'TBD',full:'To Be Determined',kor:'추후결정'},{no:9,abbr:'Ord',full:'Ordnance',kor:'병기'},{no:10,abbr:'SOP',full:'Standard(Standing) Operating Procedure',kor:'예규'},{no:11,abbr:'OPSEC',full:'Operations Security',kor:'작전 보안'},{no:12,abbr:'XO',full:'Executive Officer',kor:'보좌관, 선임장교'},{no:13,abbr:'SOI',full:'Signal Operating Instructions',kor:'통신운용지시'},{no:14,abbr:'ROADCON',full:'Road Condition',kor:'도로상황'},{no:15,abbr:'VTC',full:'Video Teleconference',kor:'원격 화상회의'},{no:16,abbr:'QTB',full:'Quarterly Training Brief',kor:'분기별 훈련보고'},{no:17,abbr:'WARNO',full:'Warning Order',kor:'준비명령'},{no:18,abbr:'SIR',full:'Serious Incident Report',kor:'주요사건보고'},{no:19,abbr:'OPORD',full:'Operation Order',kor:'작전명령'},{no:20,abbr:'SITREP',full:'Situation Report',kor:'상황보고'},{no:21,abbr:'USFK',full:'United States Forces Korea',kor:'주한미군'},{no:22,abbr:'PM',full:'Provost Marshal',kor:'헌병 대장 (참모)'},{no:23,abbr:'RELROK',full:'Releasable to Republic of Korea',kor:'한측 공개가능'},{no:24,abbr:'SAW',full:'Squad Automatic Weapon',kor:'분대자동화기'},{no:25,abbr:'TMP',full:'Transportation Motor Pool',kor:'수송부'}],
+  'FormD_Day2':[{no:1,abbr:'DEFCON',full:'Defense Readiness Condition',kor:'데프콘(방어준비태세)'},{no:2,abbr:'ADA',full:'Air Defense Artillery',kor:'방공포병'},{no:3,abbr:'CofS',full:'Chief of Staff',kor:'참모장'},{no:4,abbr:'CP TANGO',full:'Command Post Theater Air, Naval, Ground Operations',kor:'전구 공해지 작전지휘소'},{no:5,abbr:'AOI',full:'Area of Interest',kor:'관심지역'},{no:6,abbr:'CG',full:'Commanding General',kor:'(장성급) 사령관'},{no:7,abbr:'DMZ',full:'Demilitarized Zone',kor:'비무장지대'},{no:8,abbr:'ACH',full:'Advanced Combat Helmet',kor:'방탄모 (개량형)'},{no:9,abbr:'BOSS',full:'Better Opportunities for Single Soldiers',kor:'독신장병 복지향상제도'},{no:10,abbr:'CFC',full:'Combined Forces Command',kor:'연합사(한미연합군사령부)'},{no:11,abbr:'CALFEX',full:'Combined Arms Live Fire Exercise',kor:'제병협동 실사격훈련'},{no:12,abbr:'CBRN',full:'Chemical, Biological, Radiological and Nuclear',kor:'화생방 및 핵'},{no:13,abbr:'AAR',full:'After Action Review',kor:'사후 강평'},{no:14,abbr:'COC',full:'Code of Conduct',kor:'복무신조'},{no:15,abbr:'ADCON',full:'Administrative Control',kor:'행정 통제'},{no:16,abbr:'CONOPS',full:'Concept of Operations',kor:'작전개념'},{no:17,abbr:'CPX',full:'Command Post Exercise',kor:'지휘소 연습'},{no:18,abbr:'APO',full:'Army Post Office',kor:'육군 군사우체국'},{no:19,abbr:'CQ',full:'Charge of Quarters',kor:'당직'},{no:20,abbr:'CASEVAC',full:'Casualty Evacuation',kor:'사상자 후송'},{no:21,abbr:'ACS',full:'Army Community Service',kor:'육군복지체계/ACS'},{no:22,abbr:'DEROS',full:'Date Eligible to Return from Overseas',kor:'귀국예정일'},{no:23,abbr:'CAC',full:'Common Access Card',kor:'전산망접속카드'},{no:24,abbr:'AA',full:'Assembly Area',kor:'집결지'},{no:25,abbr:'CUI',full:'Controlled Unclassified Information',kor:'비공개 군사 자료'}],
+  'FormD_Day3':[{no:1,abbr:'FS',full:'Freedom Shield',kor:'자유방패 연습'},{no:2,abbr:'NFA',full:'No Fire Area',kor:'사격금지구역'},{no:3,abbr:'IPR',full:'In Process Review (Report)',kor:'중간검토 (보고)'},{no:4,abbr:'FA',full:'Field Artillery',kor:'야전포병'},{no:5,abbr:'nKA/nKPA',full:'North Korea Army/North Korean People\'s Army',kor:'북한군'},{no:6,abbr:'FRAGO',full:'Fragmentary Order',kor:'단편명령'},{no:7,abbr:'HHC',full:'Headquarters and Headquarters Company',kor:'(본부 및) 본부 중대'},{no:8,abbr:'EO',full:'Equal Opportunity',kor:'기회균등'},{no:9,abbr:'DOD',full:'Department of Defense',kor:'미국방부'},{no:10,abbr:'HQDA',full:'Headquarters, Department of the Army',kor:'미육군 본부'},{no:11,abbr:'2ID/RUCD',full:'2nd Infantry Division/ROK-US Combined Division',kor:'미2사단/연합사단'},{no:12,abbr:'KATUSA',full:'Korean Augmentation to the US Army',kor:'카투사'},{no:13,abbr:'FLC',full:'Fighting Load Carrier',kor:'야전전투조끼'},{no:14,abbr:'LNO',full:'Liaison Officer',kor:'연락장교'},{no:15,abbr:'MSC',full:'Major Subordinate Command',kor:'주요 예하 사령부'},{no:16,abbr:'EDRE',full:'Emergency Deployment Readiness Exercise',kor:'비상전개 준비태세훈련'},{no:17,abbr:'FY',full:'Fiscal Year',kor:'회계연도'},{no:18,abbr:'EIB',full:'Expert Infantry Badge',kor:'우수보병 기장'},{no:19,abbr:'JCS',full:'Joint Chiefs of Staff',kor:'합동참모본부'},{no:20,abbr:'FM',full:'Field Manual',kor:'야전 교범'},{no:21,abbr:'ETS',full:'Expiration Term of Service/Estimated Time of Separation',kor:'전역일자'},{no:22,abbr:'IOTV',full:'Improved Outer Tactical Vest',kor:'방탄조끼 (개량형)'},{no:23,abbr:'FPCON',full:'Force Protection Condition',kor:'부대 방호 태세(의 등급)'},{no:24,abbr:'OP',full:'Observation Post',kor:'관측소'},{no:25,abbr:'IFAK',full:'Individual First Aid Kit',kor:'야전구급키트 (개량형)'}],
+  'FormD_Day4':[{no:1,abbr:'USFK',full:'United States Forces Korea',kor:'주한미군'},{no:2,abbr:'TBD',full:'To Be Determined',kor:'추후결정'},{no:3,abbr:'TLP',full:'Troop Leading Procedures',kor:'부대지휘절차'},{no:4,abbr:'PSG',full:'Platoon Sergeant',kor:'부소대장'},{no:5,abbr:'T/O&E',full:'Table of Organization and Equipment',kor:'편제장비표'},{no:6,abbr:'PMCS',full:'Preventive Maintenance Checks & Services',kor:'예방정비 검사 및 지원'},{no:7,abbr:'SITREP',full:'Situation Report',kor:'상황보고'},{no:8,abbr:'POC',full:'Point of Contact',kor:'연락처, 담당관'},{no:9,abbr:'PM',full:'Provost Marshal',kor:'헌병 대장 (참모)'},{no:10,abbr:'PLL',full:'Prescribed Load List',kor:'규정휴대량 목록'},{no:11,abbr:'TIS',full:'Time in Service',kor:'복무기간'},{no:12,abbr:'TCP',full:'Traffic Control Point',kor:'교통통제소'},{no:13,abbr:'PDS',full:'Personnel Daily Summary',kor:'일일병력 요약 보고'},{no:14,abbr:'SOFA',full:'Status of Forces Agreement',kor:'주한미군 지위 협정'},{no:15,abbr:'PSYOP',full:'Psychological Operations',kor:'심리작전'},{no:16,abbr:'Ord',full:'Ordnance',kor:'병기'},{no:17,abbr:'UNC',full:'United Nations Command',kor:'유엔군 사령부'},{no:18,abbr:'SOP',full:'Standard(Standing) Operating Procedure',kor:'예규'},{no:19,abbr:'TMP',full:'Transportation Motor Pool',kor:'수송부'},{no:20,abbr:'REDCON',full:'Readiness Condition',kor:'준비태세'},{no:21,abbr:'RSOI',full:'Reception, Staging, Onward Movement, and Integration',kor:'연합 전시증원'},{no:22,abbr:'SHARP',full:'Sexual Harassment/Assault Response and Prevention',kor:'샤프(성범죄 대응 및 예방 프로그램)'},{no:23,abbr:'UCMJ',full:'Uniform Code of Military Justice',kor:'군인복무규율'},{no:24,abbr:'WARNO',full:'Warning Order',kor:'준비명령'},{no:25,abbr:'WMD',full:'Weapons of Mass Destruction',kor:'대량살상무기'}]
+};
 
+// ─────────────────────────────────────────────────────────────
+// MATCHING QUIZ KEYS (List1 — 매칭시험)
+// ─────────────────────────────────────────────────────────────
+const MATCHING_KEYS = {
+  Unit1:[{no:1,term:'CA',definition:'cap or hat',answer:7},{no:2,term:'CS',definition:'in an ordered arrangement of troops or vehicles',answer:8},{no:3,term:'CSS',definition:'a street or a road',answer:17},{no:4,term:'courtesy',definition:'Combat Support',answer:2},{no:5,term:'Age of Chivalry',definition:'Command, control, communications, and computer operations (C4OPS)',answer:58},{no:6,term:'standing',definition:'to execute the motions of',answer:39},{no:7,term:'headdress',definition:'to wear headgear such as a garrison cap, service cap, or patrol cap',answer:30},{no:8,term:'in formation',definition:'an officer in the grade of O-3',answer:26},{no:9,term:'colors',definition:'marked by extreme or excessive care in the consideration or treatment of details',answer:14},{no:10,term:'homage',definition:'a unit consisting of a headquarters and two or more platoons',answer:28},{no:11,term:'sentinels',definition:'side-by-side in a line',answer:15},{no:12,term:'attire',definition:'a bugle call at about sunrise signaling the first military formation of the day',answer:43},{no:13,term:'adjutant',definition:'estimated time of departure/Start Point',answer:48},{no:14,term:'meticulous',definition:'Clothes',answer:12},{no:15,term:'in ranks',definition:'meal; the place where a meal is eaten',answer:18},{no:16,term:'details',definition:'Combat Arms',answer:1},{no:17,term:'thoroughfare',definition:'Guards',answer:11},{no:18,term:'mess',definition:'not later than',answer:51},{no:19,term:'Rest',definition:'an officer in the grade of O-1 or O-2',answer:34},{no:20,term:'As you were',definition:'an enlisted person in a leadership position; corporal through sergeant major',answer:36},{no:21,term:'At ease',definition:'a military unit made up of two or more squads',answer:37},{no:22,term:'anti-aircraft (AA)',definition:'a hierarchical support channel which is not independent of but subordinate to and supportive of the chain of command',answer:45},{no:23,term:'Attention',definition:'Respect',answer:10},{no:24,term:'battalion',definition:'equipment, supplies, ammunition, and personnel involved in the use of cannon, rocket, or surface-to-surface missile launchers',answer:32},{no:25,term:'brigade',definition:'In the Middle Ages, Knights were expected to have ideal qualities such as courage, honor, courtesy, and concern for helping the weak',answer:5},{no:26,term:'Captain',definition:'an officer in the grade of O-5',answer:33},{no:27,term:'Colonel',definition:'a military unit composed of a headquarters and two or more companies, batteries, or similar units',answer:24},{no:28,term:'company',definition:'Logistics',answer:56},{no:29,term:'corps',definition:'a small group of Soldiers; a subdivision of a platoon',answer:40},{no:30,term:'cover',definition:'Intelligence',answer:54},{no:31,term:'division',definition:'very important person',answer:49},{no:32,term:'field artillery (FA)',definition:'A phrase used to inform Soldiers that they may move or stand in a natural manner.',answer:21},{no:33,term:'lieutenant colonel',definition:'close of business',answer:52},{no:34,term:'lieutenant',definition:'A command phrase used to inform Soldiers that they may move, talk, smoke, or drink from a canteen.',answer:19},{no:35,term:'major general',definition:'noncombat duties assigned; the people selected for duty',answer:16},{no:36,term:'noncommissioned officer (NCO)',definition:'a polite or considerate act or remark',answer:4},{no:37,term:'platoon',definition:'carrying weapons or having them attached to the person',answer:41},{no:38,term:'regiment',definition:'the last bugle call of the military day; traditionally played at military funerals',answer:44},{no:39,term:'render',definition:'a tactical unit consisting of two or more divisions and auxiliary arms and services',answer:29},{no:40,term:'squad',definition:'A staff officer in the Army who assist the commanding officer',answer:13},{no:41,term:'under arms',definition:'Operations and Training',answer:55},{no:42,term:'chain of command',definition:'weapons used against hostile aircraft',answer:22},{no:43,term:'reveille',definition:'resources management',answer:59},{no:44,term:'taps',definition:'a military unit consisting of several battalions; equal to a brigade',answer:38},{no:45,term:'NCO support channel',definition:'absent without leave',answer:46},{no:46,term:'AWOL',definition:'Personnel',answer:53},{no:47,term:'ETA',definition:'a tactical military unit composed of a headquarters and usually three brigades',answer:31},{no:48,term:'ETD/SP',definition:'A command phrase used to inform Soldiers that they may continue doing an activity',answer:20},{no:49,term:'VIP',definition:'please respond',answer:50},{no:50,term:'RSVP',definition:'an officer in the grade of O-8',answer:35},{no:51,term:'NLT',definition:'steps of command within an organization',answer:42},{no:52,term:'COB',definition:'Civil-military operations',answer:57},{no:53,term:'G-1/S-1',definition:'flags of organizations and certain civilian and military officials',answer:9},{no:54,term:'G-2/S-2',definition:'an officer in the grade of O-6',answer:27},{no:55,term:'G-3/S-3',definition:'position or reputation',answer:6},{no:56,term:'G-4/S-4',definition:'a unit composed of a headquarters, one or more battalions, and supporting units',answer:25},{no:57,term:'G-5/S-5',definition:'A word used to inform Soldiers that they should stand up straight and be ready for a command.',answer:23},{no:58,term:'G-6/S-6',definition:'estimated time of arrival',answer:47},{no:59,term:'RM',definition:'Combat Service Support',answer:3}],
+  Unit2:[{no:1,term:'bearing',definition:'work of an individual for one hour',answer:27},{no:2,term:'CONUS',definition:'(informal) summarize',answer:25},{no:3,term:'conveyance',definition:'means of transportation such as cars, trucks, buses, etc.',answer:3},{no:4,term:'dog tag/ID tag',definition:'Right! Correct!',answer:23},{no:5,term:'dress uniform',definition:'droop or slump; to not stand or sit straight',answer:14},{no:6,term:'faddish',definition:'a covering or protective device for the head',answer:8},{no:7,term:'frayed',definition:'day of the attack',answer:24},{no:8,term:'headgear',definition:'North Atlantic Treaty Organization',answer:19},{no:9,term:'look squarely in the eye',definition:'civilian clothing',answer:15},{no:10,term:'luster',definition:'raveled or worn; the place where the weave comes apart',answer:7},{no:11,term:'mess dress',definition:'stick out from the surrounding surface or area',answer:12},{no:12,term:'protrude',definition:'a full day; 24 hours a day',answer:21},{no:13,term:'retreat',definition:'a ceremony during which the flag is lowered at the end of the duty day',answer:13},{no:14,term:'slouch',definition:'a circuit or a schematic diagram',answer:26},{no:15,term:'civvies',definition:'manner; the way a person moves or stands',answer:1},{no:16,term:'epaulet',definition:'military clothing worn during formal occasions',answer:5},{no:17,term:'fly',definition:'privately owned vehicle',answer:20},{no:18,term:'ASAP',definition:'formal military clothing',answer:11},{no:19,term:'NATO',definition:'continental United States',answer:2},{no:20,term:'POV',definition:'as soon as possible',answer:18},{no:21,term:'around the clock',definition:'not functioning',answer:22},{no:22,term:'on the blink',definition:'stylish; something that interests people for a short time',answer:6},{no:23,term:'check (v)',definition:'a shoulder ornament, especially a fringed strap worn on military uniforms',answer:16},{no:24,term:'D-Day',definition:'a glow of reflected light; a shine from the surface',answer:10},{no:25,term:'recap',definition:'identification worn by military personnel on a chain around the neck',answer:4},{no:26,term:'road map',definition:'to look directly at the person\'s eyes',answer:9},{no:27,term:'man-hour',definition:'the zipper or button opening on the front of trousers or pants',answer:17}],
+  Unit3:[{no:1,term:'personal checks',definition:'lodging; a place to stay',answer:11},{no:2,term:'surcharge',definition:'making up for; payment',answer:4},{no:3,term:'nonprofit',definition:'lodging for a single person',answer:15},{no:4,term:'compensation',definition:'Army and Air Force Exchange Services',answer:37},{no:5,term:'due',definition:'living accommodations; lodging',answer:26},{no:6,term:'defray',definition:'area where military personnel are not allowed',answer:33},{no:7,term:'services',definition:'identification card',answer:20},{no:8,term:'garrison',definition:'the field equipment and clothing carried by US Soldiers',answer:9},{no:9,term:'TA-50 field gear',definition:'the office that provides lodging',answer:14},{no:10,term:'kitchenette',definition:'a room in the barracks where Soldiers can sit and relax',answer:30},{no:11,term:'accommodation',definition:'a military camp, fort, base, post, or station',answer:21},{no:12,term:'duplex home',definition:'a grocery store',answer:17},{no:13,term:'single dwelling unit',definition:'an administration room which provides administrative support',answer:29},{no:14,term:'billeting office',definition:'military forces (Air Force, Army, Navy, Marines)',answer:7},{no:15,term:'bachelor quarters',definition:'A pass is a short and authorized absence from post',answer:31},{no:16,term:'Clinic',definition:'(slang) referring to or meaning anything and everything except NO',answer:32},{no:17,term:'Commissary',definition:'temporary; someone who is arriving or leaving',answer:28},{no:18,term:'Dispensary',definition:'lodging for a family',answer:19},{no:19,term:'family quarters',definition:'persons with a continuous rather than a temporary assignment',answer:23},{no:20,term:'ID card',definition:'residence; house for one family',answer:13},{no:21,term:'Installation',definition:'a military post',answer:8},{no:22,term:'PCS',definition:'Army Military Clothing Sales Store',answer:34},{no:23,term:'permanent party',definition:'temporary duty',answer:27},{no:24,term:'Post',definition:'fee or charge for a service',answer:5},{no:25,term:'post exchange (PX)',definition:'a status granted to individuals allowing them to access classified information',answer:38},{no:26,term:'Quarters',definition:'a place where medical or dental aid is provided',answer:18},{no:27,term:'TDY',definition:'a written order from an individual to a bank to pay money',answer:1},{no:28,term:'Transient',definition:'permanent change of station',answer:22},{no:29,term:'orderly room',definition:'a facility for diagnosis and treatment of outpatients',answer:16},{no:30,term:'day room',definition:'meals, ready-to-eat',answer:36},{no:31,term:'Pass',definition:'not intending or intended to earn a profit',answer:3},{no:32,term:'HOOAH!',definition:'money that you have to pay in addition to the basic price',answer:2},{no:33,term:'off-limits',definition:'a small kitchen containing cooking facilities',answer:10},{no:34,term:'AMCSS',definition:'dining facility',answer:35},{no:35,term:'DFAC',definition:'a house with two separate family units',answer:12},{no:36,term:'MRE',definition:'to provide the payment of; pay; to pay for',answer:6},{no:37,term:'AAFES',definition:'a military base; the place at which a body of troops is stationed',answer:24},{no:38,term:'security clearance',definition:'a department store',answer:25}]
+};
+
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
 function norm(s){ return (s||"").toLowerCase().replace(/[^a-z0-9가-힣\s]/g," ").replace(/\s+/g," ").trim(); }
 function overlap(a,b){ const wa=new Set(norm(a).split(" ").filter(Boolean)),wb=norm(b).split(" ").filter(Boolean); if(!wa.size||!wb.length)return 0; return wb.filter(w=>wa.has(w)).length/Math.max(wa.size,wb.length); }
-function gradeQ(student,correct,sec){
+
+function gradeAcronym(student, q) {
+  const parts = (student||"").split("|");
+  const eok = overlap((parts[0]||"").trim(), q.full) >= 0.65;
+  const kok = overlap((parts[1]||"").trim(), q.kor) >= 0.65;
+  if(eok && kok) return "correct";
+  if(eok || kok) return "review";
+  if(overlap(student||"", q.full) >= 0.4 || overlap(student||"", q.kor) >= 0.4) return "review";
+  return "wrong";
+}
+
+function gradeMatching(student, correctAnswer) {
+  return parseInt(student) === correctAnswer ? "correct" : "wrong";
+}
+
+function gradeFinal(student, correct, sec) {
   if(sec==="A") return parseInt(student)===parseInt(correct)?"correct":"wrong";
   if(sec==="C") return (student||"").toUpperCase().trim()===correct?"correct":"wrong";
   if(sec==="B"){
@@ -52,40 +99,141 @@ function gradeQ(student,correct,sec){
     if(overlap(student||"",eng)>=0.4||overlap(student||"",kor)>=0.4)return"review";
     return"wrong";
   }
-  if(sec==="D"){ const v=overlap(student||"",correct); if(v>=0.6)return"correct"; if(v>=0.3)return"review"; return"wrong"; }
+  if(sec==="D"){const v=overlap(student||"",correct);if(v>=0.6)return"correct";if(v>=0.3)return"review";return"wrong";}
   return"wrong";
 }
 
-const P1=`You are reading a KATUSA ELT exam answer sheet photo.
-Extract Section A (Q1-25: number per question) and Section B (Q26-50: English|Korean joined by pipe).
-Return ONLY valid JSON, no markdown: {"name":"or null","sn":"or null","A":{"1":"9"},"B":{"26":"Army Community Service|육군복지체계"}}
-Blank="".`;
-const P2=`You are reading a KATUSA ELT exam answer sheet photo.
+// OCR Prompts
+const P_FINAL1 = `You are reading a KATUSA ELT final exam answer sheet photo.
+Extract Section A (Q1-25: number per question) and Section B (Q26-50: English full form + Korean translation joined by pipe |).
+Return ONLY valid JSON, no markdown: {"name":"or null","sn":"or null","A":{"1":"9"},"B":{"26":"Army Community Service|육군복지체계"}}. Blank="".`;
+
+const P_FINAL2 = `You are reading a KATUSA ELT final exam answer sheet photo.
 Extract Section C (Q51-80: T or F) and Section D (Q81-100: fill-in keywords).
-Return ONLY valid JSON, no markdown: {"C":{"51":"T"},"D":{"81":"established rules"}}
+Return ONLY valid JSON, no markdown: {"C":{"51":"T"},"D":{"81":"established rules"}}. Blank="".`;
+
+const P_ACRONYM = (n) => `You are reading a KATUSA ELT acronym quiz answer sheet photo.
+Extract ${n} handwritten answers. Each row has a number and the student writes the English full form and Korean translation.
+Return ONLY valid JSON, no markdown: {"answers":{"1":"Central Issue Facility|중앙장비지급소","2":"Change of Command|지휘관 이취임"}}
+Join English and Korean with pipe |. Blank="".`;
+
+const P_MATCHING = (n) => `You are reading a KATUSA ELT matching quiz answer sheet photo.
+Extract ${n} handwritten answers. Each definition has a blank where the student writes a number (matching the term number).
+Return ONLY valid JSON, no markdown: {"answers":{"1":"7","2":"8","3":"17"}}
 Blank="".`;
 
+// ─────────────────────────────────────────────────────────────
+// SHARED UI COMPONENTS
+// ─────────────────────────────────────────────────────────────
+const C = {
+  bg:"#f0f4f8",white:"#ffffff",text:"#1a202c",muted:"#718096",border:"#e2e8f0",
+  blue:"#1a56db",green:"#38a169",greenL:"#f0fff4",greenD:"#276749",
+  red:"#e53e3e",redL:"#fff5f5",redD:"#c53030",
+  yellow:"#d69e2e",yellowL:"#fffbeb",
+};
+const card = {background:C.white,borderRadius:14,border:`1px solid ${C.border}`,padding:16,marginBottom:12,boxShadow:"0 1px 3px rgba(0,0,0,.06)"};
+const inp = {background:"#f7fafc",border:`2px solid ${C.border}`,borderRadius:10,color:C.text,padding:"11px 12px",fontSize:15,fontWeight:600,width:"100%",outline:"none"};
+
+function SH({label,right}){ return <div style={{fontSize:14,fontWeight:800,color:C.text,paddingBottom:10,borderBottom:`2px solid ${C.border}`,marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>{label}</span>{right&&<span style={{color:right.rev>0?C.yellow:C.green,fontWeight:800}}>{right.correct}/{right.total}{right.rev>0?` (검토 ${right.rev})`:" ✓"}</span>}</div>; }
+
+function RRow({q,student,correct,correctStr,result,ov,onOv}){
+  const fin=ov!==undefined?(ov?"correct":"wrong"):result;
+  const bg=fin==="correct"?"transparent":fin==="review"?C.yellowL:C.redL;
+  const bd=fin==="correct"?C.border:fin==="review"?"#f6e05e":"#feb2b2";
+  const tc=fin==="correct"?C.greenD:fin==="review"?C.yellow:C.redD;
+  return(
+    <div style={{display:"grid",gridTemplateColumns:"28px 1fr auto",gap:8,alignItems:"start",padding:"8px 10px",borderRadius:8,marginBottom:4,background:bg,border:`1.5px solid ${bd}`}}>
+      <span style={{fontSize:13,color:C.muted,fontWeight:800,paddingTop:2}}>{q}.</span>
+      <div>
+        <div style={{fontSize:14,fontWeight:700,color:tc,wordBreak:"break-all"}}>{student||<em style={{color:C.muted,fontWeight:400}}>미입력</em>}</div>
+        {fin!=="correct"&&<div style={{fontSize:12,color:C.muted,marginTop:3}}>정답: <span style={{color:C.blue,fontWeight:700}}>{correctStr}</span></div>}
+      </div>
+      <div style={{display:"flex",gap:4,alignItems:"center"}}>
+        {(result==="review"||ov!==undefined)&&<>
+          <button onClick={()=>onOv(true)}  style={{width:34,height:30,borderRadius:7,border:`2px solid ${ov===true?C.green:C.border}`,background:ov===true?C.greenL:C.white,color:ov===true?C.greenD:C.muted,cursor:"pointer",fontSize:15,fontWeight:800}}>O</button>
+          <button onClick={()=>onOv(false)} style={{width:34,height:30,borderRadius:7,border:`2px solid ${ov===false?C.red:C.border}`,background:ov===false?C.redL:C.white,color:ov===false?C.redD:C.muted,cursor:"pointer",fontSize:15,fontWeight:800}}>X</button>
+        </>}
+        <span style={{fontSize:14}}>{fin==="correct"?"✅":fin==="review"?"⚠️":"❌"}</span>
+      </div>
+    </div>
+  );
+}
+
+function PhotoBox({img,loading,count,label,sub,onTap,err,ref:r}){
+  return(
+    <div style={card}>
+      <SH label={label}/>
+      <div onClick={onTap} style={{border:`2.5px dashed ${img?C.green:C.muted}`,borderRadius:12,padding:14,textAlign:"center",cursor:"pointer",background:img?C.greenL:"#f7fafc",minHeight:120,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8}}>
+        {loading?<><div style={{fontSize:26,animation:"spin 1s linear infinite"}}>⚙️</div><div style={{fontSize:14,fontWeight:700,color:C.muted}}>인식 중...</div></>
+        :img?<><img src={img} style={{maxHeight:70,borderRadius:8,maxWidth:"100%"}}/><div style={{fontSize:13,fontWeight:800,color:C.greenD}}>✓ {count}문항 인식</div><div style={{fontSize:12,color:C.blue,fontWeight:700}}>탭하여 재촬영</div></>
+        :<><div style={{fontSize:34}}>📷</div><div style={{fontSize:15,color:C.blue,fontWeight:800}}>촬영하기</div>{sub&&<div style={{fontSize:12,color:C.muted,fontWeight:600}}>{sub}</div>}</>}
+      </div>
+      {err&&<div style={{fontSize:13,fontWeight:700,color:C.redD,marginTop:8,padding:"7px 10px",background:C.redL,border:"1px solid #feb2b2",borderRadius:8}}>{err}</div>}
+    </div>
+  );
+}
+
+function ScoreHeader({score,total,name,sn,subtitle,rl,onSave,onReset}){
+  const pct=total>0?Math.round(score/total*100):0;
+  const sc=score>=total*0.8?C.greenD:score>=total*0.6?C.yellow:C.redD;
+  const bg=score>=total*0.8?C.greenL:score>=total*0.6?C.yellowL:C.redL;
+  const bd=score>=total*0.8?"#9ae6b4":score>=total*0.6?"#f6e05e":"#feb2b2";
+  return(
+    <div style={{...card,background:bg,border:`2px solid ${bd}`,display:"flex",alignItems:"center",gap:14}}>
+      <div style={{textAlign:"center",minWidth:76}}>
+        <div style={{fontSize:50,fontWeight:900,lineHeight:1,color:sc}}>{score}</div>
+        <div style={{fontSize:12,fontWeight:700,color:C.muted,marginTop:2}}>/ {total}점</div>
+      </div>
+      <div style={{flex:1}}>
+        <div style={{fontWeight:800,fontSize:17,color:C.text}}>{name||"이름 없음"} <span style={{color:C.muted,fontWeight:600,fontSize:14}}>{sn}</span></div>
+        <div style={{fontSize:13,fontWeight:700,color:C.muted,marginTop:3}}>{subtitle}</div>
+        {rl>0&&<div style={{marginTop:8,fontSize:13,fontWeight:700,color:"#744210",background:C.yellowL,border:"2px solid #f6c90e",borderRadius:8,padding:"6px 10px"}}>⚠ 검토 {rl}문항 — O/X 후 저장</div>}
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        <button onClick={onSave} disabled={rl>0} style={{padding:"10px 14px",borderRadius:9,border:"none",background:rl>0?"#cbd5e0":C.blue,color:"#fff",cursor:rl>0?"not-allowed":"pointer",fontSize:14,fontWeight:800,whiteSpace:"nowrap"}}>저장 →</button>
+        <button onClick={onReset} style={{padding:"8px 10px",borderRadius:9,border:`2px solid ${C.border}`,background:C.white,color:C.muted,cursor:"pointer",fontSize:13,fontWeight:700}}>초기화</button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// MAIN APP
+// ─────────────────────────────────────────────────────────────
 function App(){
-  const [tab,setTab]=useState("grade");
+  const [tab,setTab]=useState("final");
   const [showSet,setShowSet]=useState(false);
   const [apiKey,setApiKey]=useState(()=>localStorage.getItem("elt_api_key")||"");
   const [apiInp,setApiInp]=useState("");
   const [apiOk,setApiOk]=useState(false);
   const [showKey,setShowKey]=useState(false);
-  const [form,setForm]=useState("K8T2A4");
-  const [nm,setNm]=useState("");
-  const [sn,setSn]=useState("");
-  const [img1,setImg1]=useState(null);
-  const [img2,setImg2]=useState(null);
-  const [ld1,setLd1]=useState(false);
-  const [ld2,setLd2]=useState(false);
-  const [er1,setEr1]=useState("");
-  const [er2,setEr2]=useState("");
-  const [ext,setExt]=useState({});
-  const [res,setRes]=useState(null);
-  const [ov,setOv]=useState({});
   const [roster,setRoster]=useState([]);
-  const rf1=useRef(),rf2=useRef();
+
+  // FINAL state
+  const [fForm,setFForm]=useState("K8T2A4");
+  const [fName,setFName]=useState(""); const [fSn,setFSn]=useState("");
+  const [fImg1,setFImg1]=useState(null); const [fImg2,setFImg2]=useState(null);
+  const [fLd1,setFLd1]=useState(false); const [fLd2,setFLd2]=useState(false);
+  const [fEr1,setFEr1]=useState(""); const [fEr2,setFEr2]=useState("");
+  const [fExt,setFExt]=useState({});
+  const [fRes,setFRes]=useState(null); const [fOv,setFOv]=useState({});
+  const fRef1=useRef(); const fRef2=useRef();
+
+  // ACRONYM state
+  const [aForm,setAForm]=useState("A"); const [aDay,setADay]=useState("Day2");
+  const [aNm,setANm]=useState(""); const [aSn,setASn]=useState("");
+  const [aImg,setAImg]=useState(null); const [aLd,setALd]=useState(false);
+  const [aEr,setAEr]=useState("");
+  const [aRes,setARes]=useState(null); const [aOv,setAOv]=useState({});
+  const aRef=useRef();
+
+  // MATCHING state
+  const [mUnit,setMUnit]=useState("Unit1");
+  const [mNm,setMNm]=useState(""); const [mSn,setMSn]=useState("");
+  const [mImg,setMImg]=useState(null); const [mLd,setMLd]=useState(false);
+  const [mEr,setMEr]=useState("");
+  const [mRes,setMRes]=useState(null); const [mOv,setMOv]=useState({});
+  const mRef=useRef();
 
   function saveKey(){
     const k=apiInp.trim();
@@ -102,7 +250,7 @@ function App(){
     const b64=url.split(",")[1],mime=(url.match(/data:([^;]+);/)||[])[1]||"image/jpeg";
     const r=await fetch("https://api.anthropic.com/v1/messages",{
       method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
-      body:JSON.stringify({model:"claude-opus-4-5",max_tokens:1000,messages:[{role:"user",content:[
+      body:JSON.stringify({model:"claude-opus-4-5",max_tokens:2000,messages:[{role:"user",content:[
         {type:"image",source:{type:"base64",media_type:mime,data:b64}},{type:"text",text:prompt}
       ]}]})
     });
@@ -111,262 +259,364 @@ function App(){
     return JSON.parse((d.content?.find(b=>b.type==="text")?.text||"{}").replace(/```json|```/g,"").trim());
   }
 
-  async function hp1(file){
-    if(!apiKey){setEr1("⚙ 설정에서 API 키를 먼저 입력해주세요");return;}
-    setEr1("");setLd1(true);
-    const b=await toB64(file);setImg1(b);
-    try{const d=await callV(b,P1);if(d.name&&!nm)setNm(d.name);if(d.sn&&!sn)setSni(d.sn);setExt(p=>({...p,A:d.A||{},B:d.B||{}}));}
-    catch(e){setEr1("인식 실패: "+e.message);setImg1(null);}
-    setLd1(false);
+  // ── FINAL handlers ──────────────────────────────────────────
+  async function fHP1(file){
+    if(!apiKey){setFEr1("⚙ API 키를 먼저 입력해주세요");return;}
+    setFEr1("");setFLd1(true);
+    const b=await toB64(file);setFImg1(b);
+    try{const d=await callV(b,P_FINAL1);if(d.name&&!fName)setFName(d.name);if(d.sn&&!fSn)setFSn(d.sn);setFExt(p=>({...p,A:d.A||{},B:d.B||{}}));}
+    catch(e){setFEr1("인식 실패: "+e.message);setFImg1(null);}
+    setFLd1(false);
   }
-  function setSni(v){setSn(v);}
-
-  async function hp2(file){
-    if(!apiKey){setEr2("⚙ 설정에서 API 키를 먼저 입력해주세요");return;}
-    setEr2("");setLd2(true);
-    const b=await toB64(file);setImg2(b);
-    try{const d=await callV(b,P2);setExt(p=>({...p,C:d.C||{},D:d.D||{}}));}
-    catch(e){setEr2("인식 실패: "+e.message);setImg2(null);}
-    setLd2(false);
+  async function fHP2(file){
+    if(!apiKey){setFEr2("⚙ API 키를 먼저 입력해주세요");return;}
+    setFEr2("");setFLd2(true);
+    const b=await toB64(file);setFImg2(b);
+    try{const d=await callV(b,P_FINAL2);setFExt(p=>({...p,C:d.C||{},D:d.D||{}}));}
+    catch(e){setFEr2("인식 실패: "+e.message);setFImg2(null);}
+    setFLd2(false);
   }
-
-  function runGrade(){
-    const k=AK[form],r={};
-    for(let i=1;i<=25;i++)  r[i]={sec:"A",student:ext.A?.[i]||"",correct:k.A[i],result:gradeQ(ext.A?.[i],k.A[i],"A")};
-    for(let i=26;i<=50;i++) r[i]={sec:"B",student:ext.B?.[i]||"",correct:k.B[i],result:gradeQ(ext.B?.[i],k.B[i],"B")};
-    for(let i=51;i<=80;i++) r[i]={sec:"C",student:ext.C?.[i]||"",correct:k.C[i],result:gradeQ(ext.C?.[i],k.C[i],"C")};
-    for(let i=81;i<=100;i++)r[i]={sec:"D",student:ext.D?.[i]||"",correct:k.D[i],result:gradeQ(ext.D?.[i],k.D[i],"D")};
-    setRes(r);setOv({});
+  function runFinal(){
+    const k=FINAL_KEYS[fForm],r={};
+    for(let i=1;i<=25;i++)  r[i]={sec:"A",student:fExt.A?.[i]||"",correct:k.A[i],result:gradeFinal(fExt.A?.[i],k.A[i],"A")};
+    for(let i=26;i<=50;i++) r[i]={sec:"B",student:fExt.B?.[i]||"",correct:k.B[i],result:gradeFinal(fExt.B?.[i],k.B[i],"B")};
+    for(let i=51;i<=80;i++) r[i]={sec:"C",student:fExt.C?.[i]||"",correct:k.C[i],result:gradeFinal(fExt.C?.[i],k.C[i],"C")};
+    for(let i=81;i<=100;i++)r[i]={sec:"D",student:fExt.D?.[i]||"",correct:k.D[i],result:gradeFinal(fExt.D?.[i],k.D[i],"D")};
+    setFRes(r);setFOv({});
   }
-
-  function calcSc(r,o){if(!r)return 0;let s=0;for(let i=1;i<=100;i++){const f=o[i]!==undefined?(o[i]?"correct":"wrong"):r[i].result;if(f==="correct")s++;}return s;}
-  function rleft(){if(!res)return 0;return Object.entries(res).filter(([q,r])=>ov[q]===undefined&&r.result==="review").length;}
-
-  function saveR(){
-    const sc=calcSc(res,ov);
-    setRoster(p=>[...p,{name:nm,sn,form,score:sc,time:new Date().toLocaleTimeString("ko-KR")}]);
-    setNm("");setSn("");setImg1(null);setImg2(null);setExt({});setRes(null);setOv({});
+  function fScore(){if(!fRes)return 0;let s=0;for(let i=1;i<=100;i++){const f=fOv[i]!==undefined?(fOv[i]?"correct":"wrong"):fRes[i].result;if(f==="correct")s++;}return s;}
+  function fRL(){if(!fRes)return 0;return Object.entries(fRes).filter(([,r])=>fOv[r]===undefined&&r.result==="review").length;}
+  function fReviewLeft(){if(!fRes)return 0;return Object.values(fRes).filter((r,i)=>fOv[i+1]===undefined&&r.result==="review").length;}
+  function saveFinal(){
+    const sc=fScore();
+    setRoster(p=>[...p,{type:"Final",name:fName,sn:fSn,subtitle:FINAL_LABELS[fForm],score:sc,total:100,time:new Date().toLocaleTimeString("ko-KR")}]);
+    setFName("");setFSn("");setFImg1(null);setFImg2(null);setFExt({});setFRes(null);setFOv({});
   }
-  function reset(){setNm("");setSn("");setImg1(null);setImg2(null);setExt({});setRes(null);setOv({});setEr1("");setEr2("");}
+  function resetFinal(){setFName("");setFSn("");setFImg1(null);setFImg2(null);setFExt({});setFRes(null);setFOv({});setFEr1("");setFEr2("");}
 
-  const sc=calcSc(res,ov),rl=rleft();
-  const canG=ext.A&&Object.keys(ext.A).length>0&&ext.C&&Object.keys(ext.C).length>0;
-  const scCol=sc>=80?"#276749":sc>=60?"#b7791f":"#c53030";
-  const scBg=sc>=80?"#f0fff4":sc>=60?"#fffbeb":"#fff5f5";
-  const scBd=sc>=80?"#9ae6b4":sc>=60?"#f6e05e":"#feb2b2";
+  const fCanGrade=fExt.A&&Object.keys(fExt.A).length>0&&fExt.C&&Object.keys(fExt.C).length>0;
+  const fSc=fScore();
+  const fRl=Object.entries(fRes||{}).filter(([q,r])=>fOv[q]===undefined&&r.result==="review").length;
 
-  const inp={background:"#f7fafc",border:"2px solid #e2e8f0",borderRadius:10,color:"#1a202c",padding:"11px 12px",fontSize:15,fontWeight:600,width:"100%",outline:"none"};
-  const card={background:"#ffffff",borderRadius:14,border:"1px solid #e2e8f0",padding:16,marginBottom:12,boxShadow:"0 1px 3px rgba(0,0,0,.06)"};
+  // ── ACRONYM handlers ────────────────────────────────────────
+  const acKey=`Form${aForm}_${aDay}`;
+  const acQs=ACRONYM_KEYS[acKey]||[];
 
-  function PBox({has,loading,img,count,label,onTap,err}){
-    return(
-      <div style={card}>
-        <div style={{fontSize:14,fontWeight:800,color:"#1a202c",paddingBottom:10,borderBottom:"2px solid #e2e8f0",marginBottom:12}}>{label}</div>
-        <div onClick={onTap} style={{border:`2.5px dashed ${has?"#38a169":"#a0aec0"}`,borderRadius:12,padding:14,textAlign:"center",cursor:"pointer",background:has?"#f0fff4":"#f7fafc",minHeight:120,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8}}>
-          {loading?<><div style={{fontSize:26,animation:"spin 1s linear infinite"}}>⚙️</div><div style={{fontSize:14,fontWeight:700,color:"#718096"}}>인식 중...</div></>
-          :img?<><img src={img} style={{maxHeight:70,borderRadius:8,maxWidth:"100%"}}/><div style={{fontSize:13,fontWeight:800,color:"#276749"}}>✓ {count}문항 인식</div><div style={{fontSize:12,color:"#1a56db",fontWeight:700}}>탭하여 재촬영</div></>
-          :<><div style={{fontSize:34}}>📷</div><div style={{fontSize:15,color:"#1a56db",fontWeight:800}}>촬영하기</div></>}
-        </div>
-        {err&&<div style={{fontSize:13,fontWeight:700,color:"#c53030",marginTop:8,padding:"7px 10px",background:"#fff5f5",border:"1px solid #feb2b2",borderRadius:8}}>{err}</div>}
-      </div>
-    );
+  async function aHP(file){
+    if(!apiKey){setAEr("⚙ API 키를 먼저 입력해주세요");return;}
+    setAEr("");setALd(true);
+    const b=await toB64(file);setAImg(b);
+    try{
+      const d=await callV(b,P_ACRONYM(acQs.length));
+      const ans=d.answers||{};
+      const r={};
+      acQs.forEach(q=>{
+        const student=ans[q.no]||ans[String(q.no)]||"";
+        r[q.no]={student,q,result:gradeAcronym(student,q)};
+      });
+      setARes(r);setAOv({});
+    }catch(e){setAEr("인식 실패: "+e.message);setAImg(null);}
+    setALd(false);
   }
-
-  function RRow({q,r,o,onO}){
-    const fin=o!==undefined?(o?"correct":"wrong"):r.result;
-    const bg=fin==="correct"?"transparent":fin==="review"?"#fffbeb":"#fff5f5";
-    const bd=fin==="correct"?"#e2e8f0":fin==="review"?"#f6e05e":"#feb2b2";
-    const tc=fin==="correct"?"#276749":fin==="review"?"#b7791f":"#c53030";
-    const cs=r.sec==="B"?`${r.correct[0]} / ${r.correct[1]}`:String(r.correct);
-    return(
-      <div style={{display:"grid",gridTemplateColumns:"28px 1fr auto",gap:8,alignItems:"start",padding:"8px 10px",borderRadius:8,marginBottom:4,background:bg,border:`1.5px solid ${bd}`}}>
-        <span style={{fontSize:13,color:"#718096",fontWeight:800,paddingTop:2}}>{q}.</span>
-        <div>
-          <div style={{fontSize:14,fontWeight:700,color:tc,wordBreak:"break-all"}}>{r.student||<em style={{color:"#a0aec0",fontWeight:400}}>미입력</em>}</div>
-          {fin!=="correct"&&<div style={{fontSize:12,color:"#718096",marginTop:3}}>정답: <span style={{color:"#1a56db",fontWeight:700}}>{cs}</span></div>}
-        </div>
-        <div style={{display:"flex",gap:4,alignItems:"center"}}>
-          {(r.result==="review"||o!==undefined)&&<>
-            <button onClick={()=>onO(true)}  style={{width:34,height:30,borderRadius:7,border:`2px solid ${o===true?"#38a169":"#e2e8f0"}`,background:o===true?"#f0fff4":"#fff",color:o===true?"#276749":"#a0aec0",cursor:"pointer",fontSize:15,fontWeight:800}}>O</button>
-            <button onClick={()=>onO(false)} style={{width:34,height:30,borderRadius:7,border:`2px solid ${o===false?"#e53e3e":"#e2e8f0"}`,background:o===false?"#fff5f5":"#fff",color:o===false?"#c53030":"#a0aec0",cursor:"pointer",fontSize:15,fontWeight:800}}>X</button>
-          </>}
-          <span style={{fontSize:14,minWidth:20,textAlign:"center"}}>{fin==="correct"?"✅":fin==="review"?"⚠️":"❌"}</span>
-        </div>
-      </div>
-    );
+  function saveAcronym(){
+    const total=acQs.length;
+    let sc=0;
+    acQs.forEach(q=>{const f=aOv[q.no]!==undefined?(aOv[q.no]?"correct":"wrong"):(aRes[q.no]?.result||"wrong");if(f==="correct")sc++;});
+    setRoster(p=>[...p,{type:"약어",name:aNm,sn:aSn,subtitle:`Form ${aForm} ${aDay}`,score:sc,total,time:new Date().toLocaleTimeString("ko-KR")}]);
+    setANm("");setASn("");setAImg(null);setARes(null);setAOv({});
   }
+  function resetAcronym(){setANm("");setASn("");setAImg(null);setARes(null);setAOv({});setAEr("");}
+  const aRl=Object.entries(aRes||{}).filter(([q,r])=>aOv[q]===undefined&&r.result==="review").length;
+  const aSc=aRes?acQs.reduce((s,q)=>{const f=aOv[q.no]!==undefined?(aOv[q.no]?"correct":"wrong"):(aRes[q.no]?.result||"wrong");return s+(f==="correct"?1:0);},0):0;
+
+  // ── MATCHING handlers ───────────────────────────────────────
+  const mtQs=MATCHING_KEYS[mUnit]||[];
+
+  async function mHP(file){
+    if(!apiKey){setMEr("⚙ API 키를 먼저 입력해주세요");return;}
+    setMEr("");setMLd(true);
+    const b=await toB64(file);setMImg(b);
+    try{
+      const d=await callV(b,P_MATCHING(mtQs.length));
+      const ans=d.answers||{};
+      const r={};
+      mtQs.forEach(q=>{
+        const student=ans[q.no]||ans[String(q.no)]||"";
+        r[q.no]={student,q,result:gradeMatching(student,q.answer)};
+      });
+      setMRes(r);setMOv({});
+    }catch(e){setMEr("인식 실패: "+e.message);setMImg(null);}
+    setMLd(false);
+  }
+  function saveMatching(){
+    const total=mtQs.length;
+    let sc=0;
+    mtQs.forEach(q=>{const f=mOv[q.no]!==undefined?(mOv[q.no]?"correct":"wrong"):(mRes[q.no]?.result||"wrong");if(f==="correct")sc++;});
+    setRoster(p=>[...p,{type:"매칭",name:mNm,sn:mSn,subtitle:mUnit,score:sc,total,time:new Date().toLocaleTimeString("ko-KR")}]);
+    setMNm("");setMSn("");setMImg(null);setMRes(null);setMOv({});
+  }
+  function resetMatching(){setMNm("");setMSn("");setMImg(null);setMRes(null);setMOv({});setMEr("");}
+  const mRl=Object.entries(mRes||{}).filter(([,r])=>mOv[r]===undefined&&r.result==="review").length;
+  const mSc=mRes?mtQs.reduce((s,q)=>{const f=mOv[q.no]!==undefined?(mOv[q.no]?"correct":"wrong"):(mRes[q.no]?.result||"wrong");return s+(f==="correct"?1:0);},0):0;
+
+  // ── RENDER ──────────────────────────────────────────────────
+  const tabs=[{id:"final",label:"Final"},{id:"acronym",label:"약어"},{id:"matching",label:"매칭"},{id:"roster",label:"성적표"}];
 
   return(
-    <div style={{background:"#f0f4f8",minHeight:"100vh",paddingBottom:70}}>
+    <div style={{background:C.bg,minHeight:"100vh",paddingBottom:70}}>
 
       {/* TOPBAR */}
-      <div style={{background:"#1a56db",padding:"0 14px",display:"flex",alignItems:"center",gap:10,height:56,position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 8px rgba(0,0,0,.15)"}}>
-        <span style={{fontWeight:800,fontSize:18,color:"#fff"}}>ELT GRADER</span>
-        <div style={{flex:1}}/>
-        {["grade","roster"].map(t=>(
-          <button key={t} onClick={()=>{setTab(t);setShowSet(false);}} style={{padding:"7px 16px",borderRadius:8,border:tab===t?"none":"2px solid rgba(255,255,255,.5)",background:tab===t?"#fff":"transparent",color:tab===t?"#1a56db":"#fff",cursor:"pointer",fontSize:15,fontWeight:800,position:"relative"}}>
-            {t==="grade"?"채점":"성적표"}
-            {t==="roster"&&roster.length>0&&<span style={{position:"absolute",top:-6,right:-6,background:"#e53e3e",color:"#fff",borderRadius:99,fontSize:10,fontWeight:800,padding:"1px 5px"}}>{roster.length}</span>}
-          </button>
-        ))}
-        <button onClick={()=>setShowSet(v=>!v)} style={{width:40,height:40,borderRadius:9,border:`2px solid ${showSet?"#fff":"rgba(255,255,255,.5)"}`,background:showSet?"rgba(255,255,255,.2)":"transparent",color:"#fff",cursor:"pointer",fontSize:19,display:"flex",alignItems:"center",justifyContent:"center"}}>⚙</button>
+      <div style={{background:C.blue,padding:"0 10px",display:"flex",alignItems:"center",gap:6,height:52,position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 8px rgba(0,0,0,.15)"}}>
+        <span style={{fontWeight:800,fontSize:16,color:"#fff",marginRight:4}}>ELT</span>
+        <div style={{display:"flex",gap:4,flex:1}}>
+          {tabs.map(t=>(
+            <button key={t.id} onClick={()=>{setTab(t.id);setShowSet(false);}} style={{flex:1,padding:"6px 4px",borderRadius:7,border:tab===t.id?"none":"1.5px solid rgba(255,255,255,.4)",background:tab===t.id?"#fff":"transparent",color:tab===t.id?C.blue:"#fff",cursor:"pointer",fontSize:13,fontWeight:800,position:"relative"}}>
+              {t.label}
+              {t.id==="roster"&&roster.length>0&&<span style={{position:"absolute",top:-5,right:-3,background:C.red,color:"#fff",borderRadius:99,fontSize:9,fontWeight:800,padding:"1px 4px"}}>{roster.length}</span>}
+            </button>
+          ))}
+        </div>
+        <button onClick={()=>setShowSet(v=>!v)} style={{width:36,height:36,borderRadius:8,border:`2px solid ${showSet?"#fff":"rgba(255,255,255,.4)"}`,background:showSet?"rgba(255,255,255,.2)":"transparent",color:"#fff",cursor:"pointer",fontSize:17,display:"flex",alignItems:"center",justifyContent:"center",marginLeft:4}}>⚙</button>
       </div>
 
       {/* SETTINGS */}
       {showSet&&<>
         <div style={{position:"fixed",inset:0,zIndex:150}} onClick={()=>setShowSet(false)}/>
-        <div style={{position:"fixed",top:62,right:10,width:300,background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:18,zIndex:200,boxShadow:"0 8px 30px rgba(0,0,0,.12)",animation:"fadeIn .15s ease"}}>
-          <div style={{fontSize:14,fontWeight:800,color:"#1a202c",marginBottom:12}}>⚙ 설정</div>
-          <div style={{fontSize:13,fontWeight:700,color:"#718096",marginBottom:7}}>Anthropic API 키</div>
+        <div style={{position:"fixed",top:58,right:10,width:290,background:C.white,border:`1px solid ${C.border}`,borderRadius:14,padding:18,zIndex:200,boxShadow:"0 8px 30px rgba(0,0,0,.12)",animation:"fadeIn .15s ease"}}>
+          <div style={{fontSize:14,fontWeight:800,color:C.text,marginBottom:12}}>⚙ 설정</div>
+          <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:7}}>Anthropic API 키</div>
           {apiKey?(
             <div>
               <div style={{display:"flex",gap:8,marginBottom:8}}>
-                <div style={{flex:1,background:"#f0fff4",border:"2px solid #9ae6b4",borderRadius:8,padding:"8px 10px",fontSize:12,color:"#276749",fontWeight:700,wordBreak:"break-all"}}>{showKey?apiKey:"sk-ant-••••••••••••••••"}</div>
-                <button onClick={()=>setShowKey(v=>!v)} style={{padding:"6px 10px",borderRadius:8,border:"2px solid #e2e8f0",background:"#fff",color:"#718096",cursor:"pointer",fontSize:13,fontWeight:700}}>{showKey?"숨기기":"보기"}</button>
+                <div style={{flex:1,background:C.greenL,border:"2px solid #9ae6b4",borderRadius:8,padding:"7px 10px",fontSize:11,color:C.greenD,fontWeight:700,wordBreak:"break-all"}}>{showKey?apiKey:"sk-ant-••••••••••••••••"}</div>
+                <button onClick={()=>setShowKey(v=>!v)} style={{padding:"5px 9px",borderRadius:7,border:`2px solid ${C.border}`,background:C.white,color:C.muted,cursor:"pointer",fontSize:12,fontWeight:700}}>{showKey?"숨기기":"보기"}</button>
               </div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:13,color:"#38a169",fontWeight:700}}>✓ 저장됨</span>
-                <button onClick={clearKey} style={{padding:"5px 12px",borderRadius:7,border:"2px solid #fed7d7",background:"#fff5f5",color:"#c53030",cursor:"pointer",fontSize:13,fontWeight:700}}>삭제</button>
+                <span style={{fontSize:13,color:C.green,fontWeight:700}}>✓ 저장됨</span>
+                <button onClick={clearKey} style={{padding:"4px 10px",borderRadius:7,border:"2px solid #fed7d7",background:C.redL,color:C.redD,cursor:"pointer",fontSize:12,fontWeight:700}}>삭제</button>
               </div>
             </div>
           ):(
             <div>
               <div style={{display:"flex",gap:8,marginBottom:6}}>
                 <input style={{...inp,flex:1,fontSize:13}} type="password" value={apiInp} onChange={e=>setApiInp(e.target.value)} placeholder="sk-ant-api03-..." onKeyDown={e=>e.key==="Enter"&&saveKey()}/>
-                <button onClick={saveKey} style={{padding:"10px 14px",borderRadius:9,border:"none",background:"#1a56db",color:"#fff",cursor:"pointer",fontSize:14,fontWeight:800,whiteSpace:"nowrap"}}>저장</button>
+                <button onClick={saveKey} style={{padding:"9px 12px",borderRadius:9,border:"none",background:C.blue,color:"#fff",cursor:"pointer",fontSize:13,fontWeight:800,whiteSpace:"nowrap"}}>저장</button>
               </div>
-              {apiOk&&<div style={{fontSize:13,color:"#38a169",fontWeight:700}}>✓ 저장됐어요!</div>}
-              <div style={{fontSize:12,color:"#718096",marginTop:6,lineHeight:1.6}}>브라우저에만 저장돼요.<br/>발급: console.anthropic.com → API Keys</div>
+              {apiOk&&<div style={{fontSize:13,color:C.green,fontWeight:700}}>✓ 저장됐어요!</div>}
+              <div style={{fontSize:11,color:C.muted,marginTop:5,lineHeight:1.6}}>브라우저에만 저장.<br/>발급: console.anthropic.com → API Keys</div>
             </div>
           )}
         </div>
       </>}
 
       {!apiKey&&(
-        <div style={{background:"#fffbeb",borderBottom:"2px solid #f6c90e",padding:"10px 14px",fontSize:14,fontWeight:700,color:"#744210",display:"flex",alignItems:"center",gap:8}}>
+        <div style={{background:C.yellowL,borderBottom:"2px solid #f6c90e",padding:"9px 14px",fontSize:14,fontWeight:700,color:"#744210",display:"flex",alignItems:"center",gap:8}}>
           ⚠ API 키가 필요해요.
-          <button onClick={()=>setShowSet(true)} style={{marginLeft:"auto",padding:"6px 14px",borderRadius:8,border:"2px solid #f6c90e",background:"#fff",color:"#744210",cursor:"pointer",fontSize:13,fontWeight:800}}>⚙ 설정</button>
+          <button onClick={()=>setShowSet(true)} style={{marginLeft:"auto",padding:"5px 12px",borderRadius:8,border:"2px solid #f6c90e",background:C.white,color:"#744210",cursor:"pointer",fontSize:13,fontWeight:800}}>⚙ 설정</button>
         </div>
       )}
 
-      {/* GRADE TAB */}
-      {tab==="grade"&&(
+      {/* ══════════════════════════════════════════════
+          FINAL TEST TAB
+      ══════════════════════════════════════════════ */}
+      {tab==="final"&&(
         <div style={{padding:"14px 12px"}}>
-
           <div style={card}>
-            <div style={{fontSize:14,fontWeight:800,color:"#1a202c",paddingBottom:10,borderBottom:"2px solid #e2e8f0",marginBottom:14}}>학생 정보</div>
+            <SH label="학생 정보"/>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
               <div>
-                <div style={{fontSize:13,fontWeight:700,color:"#718096",marginBottom:6}}>폼 선택</div>
-                <select style={inp} value={form} onChange={e=>setForm(e.target.value)}>
-                  {Object.entries(FL).map(([k,v])=><option key={k} value={k}>{v} ({k})</option>)}
+                <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:6}}>폼 선택</div>
+                <select style={inp} value={fForm} onChange={e=>setFForm(e.target.value)}>
+                  {Object.entries(FINAL_LABELS).map(([k,v])=><option key={k} value={k}>{v} ({k})</option>)}
                 </select>
               </div>
               <div>
-                <div style={{fontSize:13,fontWeight:700,color:"#718096",marginBottom:6}}>이름</div>
-                <input style={inp} value={nm} onChange={e=>setNm(e.target.value)} placeholder="자동 인식"/>
+                <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:6}}>이름</div>
+                <input style={inp} value={fName} onChange={e=>setFName(e.target.value)} placeholder="자동 인식"/>
               </div>
             </div>
-            <div>
-              <div style={{fontSize:13,fontWeight:700,color:"#718096",marginBottom:6}}>군번 SN</div>
-              <input style={inp} value={sn} onChange={e=>setSn(e.target.value)} placeholder="자동 인식"/>
-            </div>
+            <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:6}}>군번 SN</div>
+            <input style={inp} value={fSn} onChange={e=>setFSn(e.target.value)} placeholder="자동 인식"/>
           </div>
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
             <div>
-              <input type="file" accept="image/*" capture="environment" ref={rf1} style={{display:"none"}} onChange={e=>e.target.files[0]&&hp1(e.target.files[0])}/>
-              <PBox has={!!img1} loading={ld1} img={img1} count={Object.keys(ext.A||{}).length+Object.keys(ext.B||{}).length} label="1장 — A·B" onTap={()=>rf1.current.click()} err={er1}/>
+              <input type="file" accept="image/*" capture="environment" ref={fRef1} style={{display:"none"}} onChange={e=>e.target.files[0]&&fHP1(e.target.files[0])}/>
+              <PhotoBox img={fImg1} loading={fLd1} count={Object.keys(fExt.A||{}).length+Object.keys(fExt.B||{}).length} label="1장 — A·B" sub="번호+약어 1~50" onTap={()=>fRef1.current.click()} err={fEr1}/>
             </div>
             <div>
-              <input type="file" accept="image/*" capture="environment" ref={rf2} style={{display:"none"}} onChange={e=>e.target.files[0]&&hp2(e.target.files[0])}/>
-              <PBox has={!!img2} loading={ld2} img={img2} count={Object.keys(ext.C||{}).length+Object.keys(ext.D||{}).length} label="2장 — C·D" onTap={()=>rf2.current.click()} err={er2}/>
+              <input type="file" accept="image/*" capture="environment" ref={fRef2} style={{display:"none"}} onChange={e=>e.target.files[0]&&fHP2(e.target.files[0])}/>
+              <PhotoBox img={fImg2} loading={fLd2} count={Object.keys(fExt.C||{}).length+Object.keys(fExt.D||{}).length} label="2장 — C·D" sub="T/F+빈칸 51~100" onTap={()=>fRef2.current.click()} err={fEr2}/>
             </div>
           </div>
 
-          {canG&&!res&&(
-            <button onClick={runGrade} style={{background:"#38a169",color:"#fff",border:"none",borderRadius:10,padding:"15px",fontSize:17,fontWeight:800,cursor:"pointer",width:"100%",marginBottom:12}}>채점 실행 →</button>
+          {fCanGrade&&!fRes&&(
+            <button onClick={runFinal} style={{background:C.green,color:"#fff",border:"none",borderRadius:10,padding:"15px",fontSize:17,fontWeight:800,cursor:"pointer",width:"100%",marginBottom:12}}>채점 실행 →</button>
           )}
 
-          {res&&(<>
-            <div style={{...card,background:scBg,border:`2px solid ${scBd}`,display:"flex",alignItems:"center",gap:14}}>
-              <div style={{textAlign:"center",minWidth:76}}>
-                <div style={{fontSize:54,fontWeight:900,lineHeight:1,color:scCol}}>{sc}</div>
-                <div style={{fontSize:13,fontWeight:700,color:"#718096",marginTop:3}}>/ 100점</div>
-              </div>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:800,fontSize:17,color:"#1a202c"}}>{nm||"이름 없음"} <span style={{color:"#718096",fontWeight:600,fontSize:14}}>{sn}</span></div>
-                <div style={{fontSize:13,fontWeight:700,color:"#718096",marginTop:4}}>{FL[form]} ({form})</div>
-                {rl>0&&<div style={{marginTop:8,fontSize:13,fontWeight:700,color:"#744210",background:"#fffbeb",border:"2px solid #f6c90e",borderRadius:8,padding:"6px 10px"}}>⚠ 검토 {rl}문항 — O/X 후 저장</div>}
-              </div>
-              <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                <button onClick={saveR} disabled={rl>0} style={{padding:"10px 14px",borderRadius:9,border:"none",background:rl>0?"#cbd5e0":"#1a56db",color:"#fff",cursor:rl>0?"not-allowed":"pointer",fontSize:14,fontWeight:800,whiteSpace:"nowrap"}}>저장 →</button>
-                <button onClick={reset} style={{padding:"8px 10px",borderRadius:9,border:"2px solid #e2e8f0",background:"#fff",color:"#718096",cursor:"pointer",fontSize:13,fontWeight:700}}>초기화</button>
-              </div>
-            </div>
-
+          {fRes&&(<>
+            <ScoreHeader score={fSc} total={100} name={fName} sn={fSn} subtitle={`${FINAL_LABELS[fForm]} (${fForm})`} rl={fRl} onSave={saveFinal} onReset={resetFinal}/>
             {[{label:"섹션 A — 번호 찾기",r:[1,25]},{label:"섹션 B — 약어 원형",r:[26,50]},{label:"섹션 C — 참/거짓",r:[51,80]},{label:"섹션 D — 빈칸 채우기",r:[81,100]}].map(({label,r:rng})=>{
               const qs=Array.from({length:rng[1]-rng[0]+1},(_,i)=>i+rng[0]);
-              const cor=qs.filter(q=>(ov[q]!==undefined?ov[q]:res[q].result==="correct")).length;
-              const rv=qs.filter(q=>ov[q]===undefined&&res[q].result==="review").length;
+              const cor=qs.filter(q=>(fOv[q]!==undefined?fOv[q]:fRes[q].result==="correct")).length;
+              const rev=qs.filter(q=>fOv[q]===undefined&&fRes[q].result==="review").length;
               return(
                 <div key={label} style={card}>
-                  <div style={{fontSize:14,fontWeight:800,color:"#1a202c",paddingBottom:10,borderBottom:"2px solid #e2e8f0",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <span>{label}</span>
-                    <span style={{color:rv>0?"#b7791f":"#276749",fontWeight:800}}>{cor}/{qs.length}{rv>0?` (검토 ${rv})`:" ✓"}</span>
-                  </div>
-                  {qs.map(q=><RRow key={q} q={q} r={res[q]} o={ov[q]} onO={v=>setOv(p=>({...p,[q]:v}))}/>)}
+                  <SH label={label} right={{correct:cor,total:qs.length,rev}}/>
+                  {qs.map(q=>{
+                    const r=fRes[q];
+                    const cs=r.sec==="B"?`${r.correct[0]} / ${r.correct[1]}`:String(r.correct);
+                    return<RRow key={q} q={q} student={r.student} correct={r.correct} correctStr={cs} result={r.result} ov={fOv[q]} onOv={v=>setFOv(p=>({...p,[q]:v}))}/>;
+                  })}
                 </div>
               );
             })}
-
-            <button onClick={saveR} disabled={rl>0} style={{background:rl>0?"#cbd5e0":"#1a56db",color:"#fff",border:"none",borderRadius:10,padding:"15px",fontSize:16,fontWeight:800,cursor:rl>0?"not-allowed":"pointer",width:"100%",opacity:rl>0?.5:1}}>
-              {rl>0?`⚠ 검토 ${rl}문항 남음`:`성적표에 저장 (${sc}점)`}
+            <button onClick={saveFinal} disabled={fRl>0} style={{background:fRl>0?"#cbd5e0":C.blue,color:"#fff",border:"none",borderRadius:10,padding:"15px",fontSize:16,fontWeight:800,cursor:fRl>0?"not-allowed":"pointer",width:"100%",opacity:fRl>0?.5:1}}>
+              {fRl>0?`⚠ 검토 ${fRl}문항 남음`:`성적표에 저장 (${fSc}점)`}
             </button>
           </>)}
         </div>
       )}
 
-      {/* ROSTER TAB */}
+      {/* ══════════════════════════════════════════════
+          ACRONYM QUIZ TAB
+      ══════════════════════════════════════════════ */}
+      {tab==="acronym"&&(
+        <div style={{padding:"14px 12px"}}>
+          <div style={card}>
+            <SH label="약어 시험 설정"/>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:10}}>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:6}}>폼</div>
+                <select style={inp} value={aForm} onChange={e=>{setAForm(e.target.value);setARes(null);setAImg(null);}}>
+                  {["A","B","C","D"].map(f=><option key={f} value={f}>Form {f}</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:6}}>Day</div>
+                <select style={inp} value={aDay} onChange={e=>{setADay(e.target.value);setARes(null);setAImg(null);}}>
+                  {["Day2","Day3","Day4"].map(d=><option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:6}}>이름</div>
+                <input style={inp} value={aNm} onChange={e=>setANm(e.target.value)} placeholder="이름"/>
+              </div>
+            </div>
+            <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:6}}>군번 SN</div>
+            <input style={inp} value={aSn} onChange={e=>setASn(e.target.value)} placeholder="군번"/>
+            <div style={{fontSize:12,color:C.muted,marginTop:8,padding:"6px 10px",background:"#f7fafc",borderRadius:8,border:`1px solid ${C.border}`}}>
+              📝 Form {aForm} {aDay} — {acQs.length}문항
+            </div>
+          </div>
+
+          <input type="file" accept="image/*" capture="environment" ref={aRef} style={{display:"none"}} onChange={e=>e.target.files[0]&&aHP(e.target.files[0])}/>
+          <PhotoBox img={aImg} loading={aLd} count={aRes?Object.keys(aRes).length:0} label="답안지 촬영" sub={`약어 ${acQs.length}문항`} onTap={()=>aRef.current.click()} err={aEr}/>
+
+          {aRes&&(<>
+            <ScoreHeader score={aSc} total={acQs.length} name={aNm} sn={aSn} subtitle={`Form ${aForm} ${aDay}`} rl={aRl} onSave={saveAcronym} onReset={resetAcronym}/>
+            <div style={card}>
+              <SH label="채점 결과" right={{correct:aSc,total:acQs.length,rev:aRl}}/>
+              {acQs.map(q=>{
+                const r=aRes[q.no];
+                return<RRow key={q.no} q={q.no} student={r?.student||""} correctStr={`${q.full} / ${q.kor}`} result={r?.result||"wrong"} ov={aOv[q.no]} onOv={v=>setAOv(p=>({...p,[q.no]:v}))}/>;
+              })}
+            </div>
+            <button onClick={saveAcronym} disabled={aRl>0} style={{background:aRl>0?"#cbd5e0":C.blue,color:"#fff",border:"none",borderRadius:10,padding:"15px",fontSize:16,fontWeight:800,cursor:aRl>0?"not-allowed":"pointer",width:"100%",opacity:aRl>0?.5:1}}>
+              {aRl>0?`⚠ 검토 ${aRl}문항 남음`:`성적표에 저장 (${aSc}/${acQs.length}점)`}
+            </button>
+          </>)}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          MATCHING QUIZ TAB
+      ══════════════════════════════════════════════ */}
+      {tab==="matching"&&(
+        <div style={{padding:"14px 12px"}}>
+          <div style={card}>
+            <SH label="매칭 시험 설정"/>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:10}}>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:6}}>Unit</div>
+                <select style={inp} value={mUnit} onChange={e=>{setMUnit(e.target.value);setMRes(null);setMImg(null);}}>
+                  {["Unit1","Unit2","Unit3"].map(u=><option key={u} value={u}>{u.replace("Unit","Unit ")} ({MATCHING_KEYS[u].length}문항)</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:6}}>이름</div>
+                <input style={inp} value={mNm} onChange={e=>setMNm(e.target.value)} placeholder="이름"/>
+              </div>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:6}}>군번 SN</div>
+                <input style={inp} value={mSn} onChange={e=>setMSn(e.target.value)} placeholder="군번"/>
+              </div>
+            </div>
+            <div style={{fontSize:12,color:C.muted,padding:"6px 10px",background:"#f7fafc",borderRadius:8,border:`1px solid ${C.border}`}}>
+              📝 {mUnit.replace("Unit","Unit ")} — {mtQs.length}문항 / 정의 보고 번호 적기
+            </div>
+          </div>
+
+          <input type="file" accept="image/*" capture="environment" ref={mRef} style={{display:"none"}} onChange={e=>e.target.files[0]&&mHP(e.target.files[0])}/>
+          <PhotoBox img={mImg} loading={mLd} count={mRes?Object.keys(mRes).length:0} label="답안지 촬영" sub={`매칭 ${mtQs.length}문항`} onTap={()=>mRef.current.click()} err={mEr}/>
+
+          {mRes&&(<>
+            <ScoreHeader score={mSc} total={mtQs.length} name={mNm} sn={mSn} subtitle={mUnit.replace("Unit","Unit ")} rl={mRl} onSave={saveMatching} onReset={resetMatching}/>
+            <div style={card}>
+              <SH label="채점 결과" right={{correct:mSc,total:mtQs.length,rev:mRl}}/>
+              {mtQs.map(q=>{
+                const r=mRes[q.no];
+                return<RRow key={q.no} q={q.no} student={r?.student||""} correctStr={`${q.answer} (${q.term})`} result={r?.result||"wrong"} ov={mOv[q.no]} onOv={v=>setMOv(p=>({...p,[q.no]:v}))}/>;
+              })}
+            </div>
+            <button onClick={saveMatching} disabled={mRl>0} style={{background:mRl>0?"#cbd5e0":C.blue,color:"#fff",border:"none",borderRadius:10,padding:"15px",fontSize:16,fontWeight:800,cursor:mRl>0?"not-allowed":"pointer",width:"100%",opacity:mRl>0?.5:1}}>
+              {mRl>0?`⚠ 검토 ${mRl}문항 남음`:`성적표에 저장 (${mSc}/${mtQs.length}점)`}
+            </button>
+          </>)}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          ROSTER TAB
+      ══════════════════════════════════════════════ */}
       {tab==="roster"&&(
         <div style={{padding:"14px 12px"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <div style={{fontWeight:800,fontSize:18,color:"#1a202c"}}>성적표 <span style={{color:"#718096",fontSize:15,fontWeight:600}}>({roster.length}명)</span></div>
-            {roster.length>0&&<div style={{fontSize:13,fontWeight:700,color:"#718096",display:"flex",gap:12}}>
-              <span>평균 <strong style={{color:"#1a202c"}}>{(roster.reduce((s,r)=>s+r.score,0)/roster.length).toFixed(1)}</strong></span>
-              <span>최고 <strong style={{color:"#276749"}}>{Math.max(...roster.map(r=>r.score))}</strong></span>
-              <span>최저 <strong style={{color:"#c53030"}}>{Math.min(...roster.map(r=>r.score))}</strong></span>
-            </div>}
-          </div>
+          <div style={{fontWeight:800,fontSize:18,color:C.text,marginBottom:14}}>성적표 <span style={{color:C.muted,fontSize:15,fontWeight:600}}>({roster.length}명)</span></div>
           {roster.length===0?(
-            <div style={{textAlign:"center",padding:"60px 0",color:"#a0aec0"}}>
+            <div style={{textAlign:"center",padding:"60px 0",color:C.muted}}>
               <div style={{fontSize:40,marginBottom:10}}>📋</div>
               <div style={{fontSize:15,fontWeight:600}}>아직 채점된 학생이 없어요</div>
             </div>
           ):(
-            <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",overflow:"hidden",boxShadow:"0 1px 3px rgba(0,0,0,.06)"}}>
+            <div style={{background:C.white,borderRadius:14,border:`1px solid ${C.border}`,overflow:"hidden",boxShadow:"0 1px 3px rgba(0,0,0,.06)"}}>
               <table style={{width:"100%",borderCollapse:"collapse"}}>
                 <thead>
                   <tr style={{background:"#f7fafc"}}>
-                    {["순위","이름","군번","폼","점수","등급","시각"].map(h=>(
-                      <th key={h} style={{padding:"11px 10px",textAlign:h==="점수"||h==="등급"?"center":"left",fontSize:13,fontWeight:800,color:"#718096",borderBottom:"2px solid #e2e8f0"}}>{h}</th>
+                    {["#","이름","군번","시험","점수","등급","시각"].map(h=>(
+                      <th key={h} style={{padding:"10px 8px",textAlign:h==="점수"||h==="등급"?"center":"left",fontSize:12,fontWeight:800,color:C.muted,borderBottom:`2px solid ${C.border}`}}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {[...roster].sort((a,b)=>b.score-a.score).map((r,i)=>{
-                    const g=r.score>=90?"A":r.score>=80?"B":r.score>=70?"C":r.score>=60?"D":"F";
-                    const gc=r.score>=80?"#276749":r.score>=60?"#b7791f":"#c53030";
-                    const gbg=r.score>=80?"#f0fff4":r.score>=60?"#fffbeb":"#fff5f5";
+                  {roster.map((r,i)=>{
+                    const pct=r.score/r.total;
+                    const gc=pct>=0.8?C.greenD:pct>=0.6?C.yellow:C.redD;
+                    const gbg=pct>=0.8?C.greenL:pct>=0.6?C.yellowL:C.redL;
+                    const gl=pct>=0.9?"A":pct>=0.8?"B":pct>=0.7?"C":pct>=0.6?"D":"F";
                     return(
-                      <tr key={i} style={{borderTop:"1px solid #e2e8f0"}}>
-                        <td style={{padding:"11px 10px",color:"#a0aec0",fontSize:14,fontWeight:700}}>{i+1}</td>
-                        <td style={{padding:"11px 10px",fontWeight:800,fontSize:15,color:"#1a202c"}}>{r.name}</td>
-                        <td style={{padding:"11px 10px",color:"#718096",fontSize:13,fontWeight:600}}>{r.sn}</td>
-                        <td style={{padding:"11px 10px",fontSize:12,fontWeight:700,color:"#1a56db"}}>{r.form}</td>
-                        <td style={{padding:"11px 10px",textAlign:"center"}}><span style={{fontSize:22,fontWeight:900,color:gc}}>{r.score}</span></td>
-                        <td style={{padding:"11px 10px",textAlign:"center"}}><span style={{padding:"3px 10px",borderRadius:99,fontSize:13,fontWeight:800,background:gbg,color:gc,border:`2px solid ${gc}`}}>{g}</span></td>
-                        <td style={{padding:"11px 10px",color:"#a0aec0",fontSize:12,fontWeight:600}}>{r.time}</td>
+                      <tr key={i} style={{borderTop:`1px solid ${C.border}`}}>
+                        <td style={{padding:"10px 8px",color:C.muted,fontSize:13,fontWeight:700}}>{i+1}</td>
+                        <td style={{padding:"10px 8px",fontWeight:800,fontSize:14,color:C.text}}>{r.name}</td>
+                        <td style={{padding:"10px 8px",color:C.muted,fontSize:12,fontWeight:600}}>{r.sn}</td>
+                        <td style={{padding:"10px 8px",fontSize:11,fontWeight:700}}>
+                          <span style={{padding:"2px 7px",borderRadius:99,background:r.type==="Final"?"#ebf4ff":r.type==="약어"?"#faf5ff":"#f0fff4",color:r.type==="Final"?C.blue:r.type==="약어"?"#553c9a":C.greenD,border:`1px solid ${r.type==="Final"?"#bfdbfe":r.type==="약어"?"#e9d8fd":"#9ae6b4"}`}}>
+                            {r.type}
+                          </span>
+                          <div style={{fontSize:11,color:C.muted,marginTop:3}}>{r.subtitle}</div>
+                        </td>
+                        <td style={{padding:"10px 8px",textAlign:"center"}}><span style={{fontSize:18,fontWeight:900,color:gc}}>{r.score}<span style={{fontSize:11,fontWeight:600,color:C.muted}}>/{r.total}</span></span></td>
+                        <td style={{padding:"10px 8px",textAlign:"center"}}><span style={{padding:"2px 8px",borderRadius:99,fontSize:12,fontWeight:800,background:gbg,color:gc,border:`2px solid ${gc}`}}>{gl}</span></td>
+                        <td style={{padding:"10px 8px",color:C.muted,fontSize:11,fontWeight:600}}>{r.time}</td>
                       </tr>
                     );
                   })}
