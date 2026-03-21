@@ -231,9 +231,10 @@ function App(){
   const [mUnit,setMUnit]=useState("Unit1");
   const [mNm,setMNm]=useState(""); const [mSn,setMSn]=useState("");
   const [mImg,setMImg]=useState(null); const [mLd,setMLd]=useState(false);
-  const [mEr,setMEr]=useState("");
+  const [mImg2,setMImg2]=useState(null); const [mLd2,setMLd2]=useState(false);
+  const [mEr,setMEr]=useState(""); const [mEr2,setMEr2]=useState("");
   const [mRes,setMRes]=useState(null); const [mOv,setMOv]=useState({});
-  const mRef=useRef();
+  const mRef=useRef(); const mRef2=useRef();
 
   function saveKey(){
     const k=apiInp.trim();
@@ -332,32 +333,53 @@ function App(){
   // ── MATCHING handlers ───────────────────────────────────────
   const mtQs=MATCHING_KEYS[mUnit]||[];
 
-  async function mHP(file){
-    if(!apiKey){setMEr("⚙ API 키를 먼저 입력해주세요");return;}
-    setMEr("");setMLd(true);
-    const b=await toB64(file);setMImg(b);
+  // Unit1: 1~30번(1장), 31~59번(2장). Unit2/3: 1장
+  const isUnit1 = mUnit==="Unit1";
+  const mtQs1 = isUnit1 ? mtQs.slice(0,30) : mtQs;   // 1장 분량
+  const mtQs2 = isUnit1 ? mtQs.slice(30) : [];         // 2장 분량 (Unit1만)
+
+  async function mHP(file, page=1){
+    if(!apiKey){page===1?setMEr("⚙ API 키를 먼저 입력해주세요"):setMEr2("⚙ API 키를 먼저 입력해주세요");return;}
+    const qs = page===1 ? mtQs1 : mtQs2;
+    if(page===1){setMEr("");setMLd(true);}else{setMEr2("");setMLd2(true);}
+    const b=await toB64(file);
+    page===1?setMImg(b):setMImg2(b);
     try{
-      const d=await callV(b,P_MATCHING(mtQs.length));
+      const startNo = qs[0]?.no||1;
+      const prompt = `You are reading a KATUSA ELT matching quiz answer sheet photo.
+Extract ${qs.length} handwritten answers. Questions are numbered ${startNo} to ${qs[qs.length-1]?.no||qs.length}.
+Each definition has a blank where the student writes a number (matching the term number).
+Return ONLY valid JSON, no markdown: {"answers":{"${startNo}":"7","${startNo+1}":"8"}}
+Blank="".`;
+      const d=await callV(b,prompt);
       const ans=d.answers||{};
-      const r={};
-      mtQs.forEach(q=>{
-        const student=ans[q.no]||ans[String(q.no)]||"";
-        r[q.no]={student,q,result:gradeMatching(student,q.answer)};
+      setMRes(prev=>{
+        const r={...(prev||{})};
+        qs.forEach(q=>{
+          const student=ans[q.no]||ans[String(q.no)]||"";
+          r[q.no]={student,q,result:gradeMatching(student,q.answer)};
+        });
+        return r;
       });
-      setMRes(r);setMOv({});
-    }catch(e){setMEr("인식 실패: "+e.message);setMImg(null);}
-    setMLd(false);
+      setMOv({});
+    }catch(e){
+      page===1?setMEr("인식 실패: "+e.message):setMEr2("인식 실패: "+e.message);
+      page===1?setMImg(null):setMImg2(null);
+    }
+    page===1?setMLd(false):setMLd2(false);
   }
   function saveMatching(){
     const total=mtQs.length;
     let sc=0;
     mtQs.forEach(q=>{const f=mOv[q.no]!==undefined?(mOv[q.no]?"correct":"wrong"):(mRes[q.no]?.result||"wrong");if(f==="correct")sc++;});
-    setRoster(p=>[...p,{type:"매칭",name:mNm,sn:mSn,subtitle:mUnit,score:sc,total,time:new Date().toLocaleTimeString("ko-KR")}]);
-    setMNm("");setMSn("");setMImg(null);setMRes(null);setMOv({});
+    setRoster(p=>[...p,{type:"매칭",name:mNm,sn:mSn,subtitle:mUnit.replace("Unit","Unit "),score:sc,total,time:new Date().toLocaleTimeString("ko-KR")}]);
+    setMNm("");setMSn("");setMImg(null);setMImg2(null);setMRes(null);setMOv({});
   }
-  function resetMatching(){setMNm("");setMSn("");setMImg(null);setMRes(null);setMOv({});setMEr("");}
-  const mRl=Object.entries(mRes||{}).filter(([,r])=>mOv[r]===undefined&&r.result==="review").length;
+  function resetMatching(){setMNm("");setMSn("");setMImg(null);setMImg2(null);setMRes(null);setMOv({});setMEr("");setMEr2("");}
+  const mRl=Object.entries(mRes||{}).filter(([,r])=>mOv[r.q?.no]===undefined&&r.result==="review").length;
   const mSc=mRes?mtQs.reduce((s,q)=>{const f=mOv[q.no]!==undefined?(mOv[q.no]?"correct":"wrong"):(mRes[q.no]?.result||"wrong");return s+(f==="correct"?1:0);},0):0;
+  // Unit1: 두 장 모두 찍었을 때만 채점 완료
+  const mCanSave = isUnit1 ? (mImg&&mImg2&&mRes&&Object.keys(mRes).length===mtQs.length) : (mImg&&mRes&&Object.keys(mRes).length===mtQs.length);
 
   // ── RENDER ──────────────────────────────────────────────────
   const tabs=[{id:"final",label:"Final"},{id:"acronym",label:"약어"},{id:"matching",label:"매칭"},{id:"roster",label:"성적표"}];
@@ -557,10 +579,21 @@ function App(){
             </div>
           </div>
 
-          <input type="file" accept="image/*" capture="environment" ref={mRef} style={{display:"none"}} onChange={e=>e.target.files[0]&&mHP(e.target.files[0])}/>
-          <PhotoBox img={mImg} loading={mLd} count={mRes?Object.keys(mRes).length:0} label="답안지 촬영" sub={`매칭 ${mtQs.length}문항`} onTap={()=>mRef.current.click()} err={mEr}/>
+          {/* Unit1: 2장, Unit2/3: 1장 */}
+          <input type="file" accept="image/*" capture="environment" ref={mRef} style={{display:"none"}} onChange={e=>e.target.files[0]&&mHP(e.target.files[0],1)}/>
+          {isUnit1?(
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+              <PhotoBox img={mImg} loading={mLd} count={mImg&&mRes?Object.keys(mRes).filter(k=>parseInt(k)<=30).length:0} label="1장 (1~30번)" sub="앞면 촬영" onTap={()=>mRef.current.click()} err={mEr}/>
+              <div>
+                <input type="file" accept="image/*" capture="environment" ref={mRef2} style={{display:"none"}} onChange={e=>e.target.files[0]&&mHP(e.target.files[0],2)}/>
+                <PhotoBox img={mImg2} loading={mLd2} count={mImg2&&mRes?Object.keys(mRes).filter(k=>parseInt(k)>30).length:0} label="2장 (31~59번)" sub="뒷면 촬영" onTap={()=>mRef2.current.click()} err={mEr2}/>
+              </div>
+            </div>
+          ):(
+            <PhotoBox img={mImg} loading={mLd} count={mRes?Object.keys(mRes).length:0} label="답안지 촬영" sub={`매칭 ${mtQs.length}문항`} onTap={()=>mRef.current.click()} err={mEr}/>
+          )}
 
-          {mRes&&(<>
+          {mCanSave&&(<>
             <ScoreHeader score={mSc} total={mtQs.length} name={mNm} sn={mSn} subtitle={mUnit.replace("Unit","Unit ")} rl={mRl} onSave={saveMatching} onReset={resetMatching}/>
             <div style={card}>
               <SH label="채점 결과" right={{correct:mSc,total:mtQs.length,rev:mRl}}/>
