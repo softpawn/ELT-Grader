@@ -105,20 +105,33 @@ function gradeFinal(student, correct, sec) {
 
 // OCR Prompts
 const P_FINAL1 = `You are reading a KATUSA ELT final exam answer sheet photo.
-Extract Section A (Q1-25: number per question) and Section B (Q26-50: English full form + Korean translation joined by pipe |).
-Return ONLY valid JSON, no markdown: {"name":"or null","sn":"or null","A":{"1":"9"},"B":{"26":"Army Community Service|육군복지체계"}}. Blank="".`;
+
+Section A (Q1-25): The student writes a number in the blank next to each question number. Extract that number exactly as written. If the student crossed out a number and rewrote it, use the final written number.
+
+Section B (Q26-50): The student writes the English full form and Korean translation for each acronym. Join them with a pipe character |. Extract exactly what is written — do NOT correct spelling errors.
+
+Also extract the student name and SN (serial number) if visible at the top.
+
+Return ONLY valid JSON, no markdown: {"name":"or null","sn":"or null","A":{"1":"9","2":"17"},"B":{"26":"Defense Readiness Condition|데프콘"}}. Blank="".`;
 
 const P_FINAL2 = `You are reading a KATUSA ELT final exam answer sheet photo.
-Extract Section C (Q51-80: T or F) and Section D (Q81-100: fill-in keywords).
-Return ONLY valid JSON, no markdown: {"C":{"51":"T"},"D":{"81":"established rules"}}. Blank="".`;
+
+Section C (Q51-80): Each row has BOTH "T" and "F" printed side by side. The student marks their answer by adding a circle, checkmark, or tick on TOP of one letter. Identify which letter (T or F) has an additional mark drawn on it — that is the student's answer. Do NOT read the printed letters themselves; read only which one has been marked/circled/checked by the student. If unclear, make your best judgment.
+
+Section D (Q81-100): The student writes keywords or phrases to fill in blanks. Extract exactly what is written. Do NOT correct spelling errors — write what the student actually wrote, including misspellings.
+
+Return ONLY valid JSON, no markdown: {"C":{"51":"F","52":"T"},"D":{"81":"taboos things to avoid doing"}}. Blank="".`;
 
 const P_ACRONYM = (n) => `You are reading a KATUSA ELT acronym quiz answer sheet photo.
-Extract ${n} handwritten answers. Each row has a number and the student writes the English full form and Korean translation.
+There are ${n} questions. Each row shows an abbreviation number and the student writes the English full form and Korean translation next to it.
+Extract exactly what the student wrote — do NOT correct spelling errors.
+Join English and Korean with a pipe | character.
 Return ONLY valid JSON, no markdown: {"answers":{"1":"Central Issue Facility|중앙장비지급소","2":"Change of Command|지휘관 이취임"}}
-Join English and Korean with pipe |. Blank="".`;
+Blank="".`;
 
 const P_MATCHING = (n) => `You are reading a KATUSA ELT matching quiz answer sheet photo.
-Extract ${n} handwritten answers. Each definition has a blank where the student writes a number (matching the term number).
+There are ${n} questions. Each row shows a definition with a small blank circle or box on the left where the student writes a number to match with the correct term.
+Extract the number written in each blank. If crossed out and rewritten, use the final number.
 Return ONLY valid JSON, no markdown: {"answers":{"1":"7","2":"8","3":"17"}}
 Blank="".`;
 
@@ -250,7 +263,7 @@ function App(){
     if(!apiKey)throw new Error("API 키 없음");
     const b64=url.split(",")[1],mime=(url.match(/data:([^;]+);/)||[])[1]||"image/jpeg";
     const r=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
+      method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
       body:JSON.stringify({model:"claude-opus-4-5",max_tokens:2000,messages:[{role:"user",content:[
         {type:"image",source:{type:"base64",media_type:mime,data:b64}},{type:"text",text:prompt}
       ]}]})
