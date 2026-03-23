@@ -285,41 +285,29 @@ function SH({label,right}){ return <div style={{fontSize:14,fontWeight:800,color
 const LOW_CONF = 0.75;
 
 // 섹션 C 전용 행 — AI 인식 답안(T/F)과 정답을 나란히 표시, 항상 O/X
-function CRow({q,student,correct,result,ov,onOv}){
-  // ov(override): true=정답, false=오답, undefined=AI 채점 그대로
-  const fin = ov===true?"correct": ov===false?"wrong": result;
-  const isOk = fin==="correct";
+function CRow({q,student,correct,editedStudent,onToggle}){
+  // editedStudent: 채점자가 토글한 값 (없으면 AI 원본 student 사용)
+  const displayVal = editedStudent!==undefined ? editedStudent : student;
+  const isOk = displayVal===correct;
+  const isEdited = editedStudent!==undefined;
   const bg = isOk?"transparent":C.redL;
   const bd = isOk?C.border:"#feb2b2";
   return(
-    <div style={{display:"grid",gridTemplateColumns:"26px 1fr 1fr 1fr auto",gap:4,alignItems:"center",padding:"5px 8px",borderRadius:7,marginBottom:3,background:bg,border:`1.5px solid ${bd}`}}>
+    <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 8px",borderRadius:7,marginBottom:3,background:bg,border:`1.5px solid ${bd}`}}>
       {/* 번호 */}
-      <span style={{fontSize:12,color:C.muted,fontWeight:800}}>{q}.</span>
-      {/* 학생 답안 */}
-      <span style={{fontSize:14,fontWeight:900,textAlign:"center",
-        color:student==="T"?"#2b6cb0":"#c53030",
-        background:student==="T"?"#ebf8ff":"#fff5f5",
-        borderRadius:5,padding:"1px 0"}}>{student||"?"}</span>
-      {/* 정답 */}
-      <span style={{fontSize:13,fontWeight:700,color:C.muted,textAlign:"center"}}>{correct}</span>
-      {/* 결과 */}
-      <span style={{fontSize:12,fontWeight:800,color:isOk?C.greenD:C.redD,textAlign:"center"}}>
-        {ov!==undefined?(isOk?"✅":"❌"):(isOk?"✓":"✗")}
-      </span>
-      {/* 수동 수정 버튼 — 연하게 항상 표시 */}
-      <div style={{display:"flex",gap:2}}>
-        <button onClick={()=>onOv(ov===true?undefined:true)}
-          style={{width:24,height:22,borderRadius:4,fontSize:11,fontWeight:800,cursor:"pointer",
-            border:`1.5px solid ${ov===true?C.green:C.border}`,
-            background:ov===true?C.greenL:"transparent",
-            color:ov===true?C.greenD:C.muted,
-            opacity:ov===undefined&&isOk?0.4:1}}>O</button>
-        <button onClick={()=>onOv(ov===false?undefined:false)}
-          style={{width:24,height:22,borderRadius:4,fontSize:11,fontWeight:800,cursor:"pointer",
-            border:`1.5px solid ${ov===false?C.red:C.border}`,
-            background:ov===false?C.redL:"transparent",
-            color:ov===false?C.redD:C.muted,
-            opacity:ov===undefined&&!isOk?0.4:1}}>X</button>
+      <span style={{fontSize:11,color:C.muted,fontWeight:800,minWidth:22}}>{q}.</span>
+      {/* 학생 답안 — 탭하면 T↔F 토글 */}
+      <div style={{flex:1}}>
+        <button onClick={()=>onToggle(q)}
+          style={{fontSize:14,fontWeight:900,cursor:"pointer",
+            color:displayVal==="T"?"#2b6cb0":"#c53030",
+            background:displayVal==="T"?"#ebf8ff":"#fff5f5",
+            border:`2px solid ${isEdited?(displayVal==="T"?"#2b6cb0":"#c53030"):"transparent"}`,
+            borderRadius:5,padding:"2px 10px",outline:"none"}}>
+          {displayVal||"?"}
+        </button>
+        {isEdited&&<span style={{fontSize:10,color:"#744210",marginLeft:4,fontWeight:700}}>수정</span>}
+        {!isOk&&<div style={{fontSize:12,fontWeight:700,color:C.greenD,marginTop:2}}>→ {correct}</div>}
       </div>
     </div>
   );
@@ -509,7 +497,23 @@ function App(){
     for(let i=81;i<=100;i++){const g=gradeFinalWithConf(fExt.D?.[i]||"",k.D[i],"D"); r[i]={sec:"D",student:fExt.D?.[i]||"",correct:k.D[i],...g};}
     setFRes(r);setFOv({});
   }
-  function fScore(){if(!fRes)return 0;let s=0;for(let i=1;i<=100;i++){const f=fOv[i]!==undefined?(fOv[i]?"correct":"wrong"):fRes[i].result;if(f==="correct")s++;}return s;}
+  function fScore(){
+    if(!fRes)return 0;
+    let s=0;
+    for(let i=1;i<=100;i++){
+      const ov=fOv[i];
+      let fin;
+      if(fRes[i].sec==="C"){
+        // C섹션: "T"/"F" 토글값이 있으면 정답과 비교
+        const val = ov==="T"||ov==="F" ? ov : fRes[i].student;
+        fin = val===fRes[i].correct?"correct":"wrong";
+      } else {
+        fin = ov===true?"correct": ov===false?"wrong": fRes[i].result;
+      }
+      if(fin==="correct")s++;
+    }
+    return s;
+  }
   function fRL(){if(!fRes)return 0;return Object.entries(fRes).filter(([,r])=>fOv[r]===undefined&&r.result==="review").length;}
   function fReviewLeft(){if(!fRes)return 0;return Object.values(fRes).filter((r,i)=>fOv[i+1]===undefined&&r.result==="review").length;}
   function saveFinal(){
@@ -722,16 +726,28 @@ Blank="".`;
               return(
                 <div key={label} style={card}>
                   <SH label={label} right={{correct:cor,total:qs.length,rev}}/>
-                  {isSecC&&<div style={{display:"grid",gridTemplateColumns:"26px 1fr 1fr 1fr auto",gap:4,padding:"3px 8px",marginBottom:4}}>
-                    <span/><span style={{fontSize:11,color:C.muted,textAlign:"center",fontWeight:700}}>학생</span><span style={{fontSize:11,color:C.muted,textAlign:"center",fontWeight:700}}>정답</span><span style={{fontSize:11,color:C.muted,textAlign:"center",fontWeight:700}}>결과</span><span/>
-                  </div>}
                   {isSecC?(
-                    // 섹션 C: 2열 그리드로 공간 절약
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
-                      {qs.map(q=>{
-                        const r=fRes[q];
-                        return<CRow key={q} q={q} student={r.student} correct={r.correct} result={r.result} ov={fOv[q]} onOv={v=>{if(v===undefined){setFOv(p=>{const n={...p};delete n[q];return n;});}else setFOv(p=>({...p,[q]:v}));}}/>;
-                      })}
+                    // 섹션 C: 51~65 왼쪽, 66~80 오른쪽 2열
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                      {[{filter:q=>q<=65},{filter:q=>q>=66}].map((col,ci)=>(
+                        <div key={ci}>
+                          {qs.filter(col.filter).map(q=>{
+                            const r=fRes[q];
+                            const edited=fOv[q]==="T"||fOv[q]==="F"?fOv[q]:undefined;
+                            return<CRow key={q} q={q} student={r.student} correct={r.correct}
+                              editedStudent={edited}
+                              onToggle={(qn)=>{
+                                const cur=fOv[qn]==="T"||fOv[qn]==="F"?fOv[qn]:fRes[qn].student;
+                                const next=cur==="T"?"F":"T";
+                                if(next===fRes[qn].student){
+                                  setFOv(p=>{const n={...p};delete n[qn];return n;});
+                                } else {
+                                  setFOv(p=>({...p,[qn]:next}));
+                                }
+                              }}/>;
+                          })}
+                        </div>
+                      ))}
                     </div>
                   ):(
                     qs.map(q=>{
