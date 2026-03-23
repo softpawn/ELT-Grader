@@ -75,14 +75,29 @@ const MATCHING_KEYS = {
 function norm(s){ return (s||"").toLowerCase().replace(/[^a-z0-9가-힣\s]/g," ").replace(/\s+/g," ").trim(); }
 function overlap(a,b){ const wa=new Set(norm(a).split(" ").filter(Boolean)),wb=norm(b).split(" ").filter(Boolean); if(!wa.size||!wb.length)return 0; return wb.filter(w=>wa.has(w)).length/Math.max(wa.size,wb.length); }
 
+function expandAlts(correct) {
+  // Split by " / " first
+  const slashParts = correct.split(/\s*\/\s*/);
+  const alts = [];
+  slashParts.forEach(part => {
+    part = part.trim();
+    alts.push(part);
+    // Also add version without parenthetical: "데프콘(방어준비태세)" → "데프콘"
+    const withoutParen = part.replace(/\s*\([^)]*\)/g, '').trim();
+    if(withoutParen && withoutParen !== part) alts.push(withoutParen);
+    // Also add just the parenthetical content: "(방어준비태세)" → "방어준비태세"
+    const parenMatch = part.match(/\(([^)]+)\)/g);
+    if(parenMatch) parenMatch.forEach(p => alts.push(p.replace(/[()]/g,'').trim()));
+  });
+  return [...new Set(alts.filter(Boolean))];
+}
 function matchesAny(student, correct) {
-  // correct may contain multiple answers separated by " / " or "/"
-  const alts = correct.split(/\s*\/\s*/);
-  return alts.some(alt => overlap(student, alt.trim()) >= 0.65);
+  const alts = expandAlts(correct);
+  return alts.some(alt => overlap(student, alt) >= 0.65);
 }
 function matchesAnyWeak(student, correct) {
-  const alts = correct.split(/\s*\/\s*/);
-  return alts.some(alt => overlap(student, alt.trim()) >= 0.4);
+  const alts = expandAlts(correct);
+  return alts.some(alt => overlap(student, alt) >= 0.4);
 }
 function gradeAcronym(student, q) {
   const parts = (student||"").split("|");
@@ -129,20 +144,24 @@ Return ONLY valid JSON, no markdown: {"name":"or null","sn":"or null","A":{"1":"
 
 const P_FINAL2 = `You are reading a KATUSA ELT final exam answer sheet photo.
 
-Section C (Q51-80): Each row has BOTH "T" and "F" printed side by side as answer choices. The student selects their answer by drawing an additional mark (circle, checkmark ✓, tick, or any extra marking) directly on top of or around ONE of the two letters.
+Section C (Q51-80): Two columns. Left: Q51-65. Right: Q66-80.
+Each row: question number | T | F
+The student marks ONE letter by drawing a circle, check ✓, slash /, tick, or any mark ON or AROUND that letter.
 
-CRITICAL RULES for Section C:
-- Look carefully at BOTH the T and F in each row
-- The student's answer is whichever letter has an EXTRA hand-drawn mark on it
-- F answers are commonly marked: students draw a circle around F, add a checkmark on F, or write a tick through F
-- Do NOT assume all answers are T — many will be F
-- A circled or marked F means the answer is F, not T
-- If the T has no extra marking but the F does, the answer is F
-- Only if truly impossible to determine, default to the letter that appears more heavily marked
+YOUR TASK: For each question number, identify which letter (T or F) has a mark on it.
 
-Section D (Q81-100): The student writes keywords or phrases to fill in blanks. Extract exactly what is written. Do NOT correct spelling errors — write what the student actually wrote, including misspellings.
+IMPORTANT:
+- Look at T first: does it have any handwriting/mark on it? If yes → answer is T
+- Look at F: does it have any handwriting/mark on it? If yes → answer is F  
+- The unmarked letter is NOT the answer
+- BOTH T and F have equal probability of being the answer — do not favor T
+- A circle around F = F. A checkmark on F = F. A tick through F = F.
+- A circle around T = T. A checkmark on T = T.
+- Report ONLY the letter that is marked, exactly as: "T" or "F"
 
-Return ONLY valid JSON, no markdown: {"C":{"51":"F","52":"T"},"D":{"81":"taboos things to avoid doing"}}. Blank="".`;
+Section D (Q81-100): Student writes keywords/phrases to fill blanks. Extract exactly as written. Do NOT fix spelling errors.
+
+Return ONLY valid JSON, no markdown: {"C":{"51":"F","52":"T","53":"T","54":"F","55":"T","56":"T","57":"F","58":"F","59":"T","60":"F","61":"T","62":"F","63":"T","64":"F","65":"F","66":"F","67":"T","68":"F","69":"F","70":"T","71":"T","72":"F","73":"T","74":"F","75":"T","76":"F","77":"F","78":"T","79":"T","80":"F"},"D":{"81":"taboos things to avoid doing"}}. Blank="".`;
 
 const P_ACRONYM = (n) => `You are reading a KATUSA ELT acronym quiz answer sheet photo.
 There are ${n} questions. Each row shows an abbreviation number and the student writes the English full form and Korean translation next to it.
