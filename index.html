@@ -286,25 +286,40 @@ const LOW_CONF = 0.75;
 
 // 섹션 C 전용 행 — AI 인식 답안(T/F)과 정답을 나란히 표시, 항상 O/X
 function CRow({q,student,correct,result,ov,onOv}){
-  const fin=ov!==undefined?(ov?"correct":"wrong"):result;
-  const isOk=fin==="correct";
-  const bg=isOk?"transparent":C.redL;
-  const bd=isOk?C.border:"#feb2b2";
-  const btnStyle=(active,col)=>({
-    width:28,height:24,borderRadius:5,fontSize:12,fontWeight:800,cursor:"pointer",
-    border:`1.5px solid ${active?col:C.border}`,
-    background:active?(col==="#38a169"?C.greenL:C.redL):"transparent",
-    color:active?(col==="#38a169"?C.greenD:C.redD):C.muted,
-  });
+  // ov(override): true=정답, false=오답, undefined=AI 채점 그대로
+  const fin = ov===true?"correct": ov===false?"wrong": result;
+  const isOk = fin==="correct";
+  const bg = isOk?"transparent":C.redL;
+  const bd = isOk?C.border:"#feb2b2";
   return(
-    <div style={{display:"grid",gridTemplateColumns:"26px 28px 28px 1fr auto",gap:5,alignItems:"center",padding:"5px 8px",borderRadius:7,marginBottom:3,background:bg,border:`1.5px solid ${bd}`}}>
+    <div style={{display:"grid",gridTemplateColumns:"26px 1fr 1fr 1fr auto",gap:4,alignItems:"center",padding:"5px 8px",borderRadius:7,marginBottom:3,background:bg,border:`1.5px solid ${bd}`}}>
+      {/* 번호 */}
       <span style={{fontSize:12,color:C.muted,fontWeight:800}}>{q}.</span>
-      <span style={{fontSize:14,fontWeight:900,color:student==="T"?"#2b6cb0":"#c53030",textAlign:"center",background:student==="T"?"#ebf8ff":"#fff5f5",borderRadius:5,padding:"1px 4px"}}>{student||"?"}</span>
-      <span style={{fontSize:12,fontWeight:700,color:C.muted,textAlign:"center"}}>{correct}</span>
-      <span style={{fontSize:12,color:isOk?C.greenD:C.redD,fontWeight:700}}>{isOk?"✓ 일치":"✗ 불일치"}</span>
-      <div style={{display:"flex",gap:3}}>
-        <button onClick={()=>onOv(ov===true?undefined:true)} style={btnStyle(ov===true,"#38a169")}>O</button>
-        <button onClick={()=>onOv(ov===false?undefined:false)} style={btnStyle(ov===false,"#e53e3e")}>X</button>
+      {/* 학생 답안 */}
+      <span style={{fontSize:14,fontWeight:900,textAlign:"center",
+        color:student==="T"?"#2b6cb0":"#c53030",
+        background:student==="T"?"#ebf8ff":"#fff5f5",
+        borderRadius:5,padding:"1px 0"}}>{student||"?"}</span>
+      {/* 정답 */}
+      <span style={{fontSize:13,fontWeight:700,color:C.muted,textAlign:"center"}}>{correct}</span>
+      {/* 결과 */}
+      <span style={{fontSize:12,fontWeight:800,color:isOk?C.greenD:C.redD,textAlign:"center"}}>
+        {ov!==undefined?(isOk?"✅":"❌"):(isOk?"✓":"✗")}
+      </span>
+      {/* 수동 수정 버튼 — 연하게 항상 표시 */}
+      <div style={{display:"flex",gap:2}}>
+        <button onClick={()=>onOv(ov===true?undefined:true)}
+          style={{width:24,height:22,borderRadius:4,fontSize:11,fontWeight:800,cursor:"pointer",
+            border:`1.5px solid ${ov===true?C.green:C.border}`,
+            background:ov===true?C.greenL:"transparent",
+            color:ov===true?C.greenD:C.muted,
+            opacity:ov===undefined&&isOk?0.4:1}}>O</button>
+        <button onClick={()=>onOv(ov===false?undefined:false)}
+          style={{width:24,height:22,borderRadius:4,fontSize:11,fontWeight:800,cursor:"pointer",
+            border:`1.5px solid ${ov===false?C.red:C.border}`,
+            background:ov===false?C.redL:"transparent",
+            color:ov===false?C.redD:C.muted,
+            opacity:ov===undefined&&!isOk?0.4:1}}>X</button>
       </div>
     </div>
   );
@@ -697,17 +712,19 @@ Blank="".`;
 
           {fRes&&(<>
             <ScoreHeader score={fSc} total={100} name={fName} sn={fSn} subtitle={`${FINAL_LABELS[fForm]} (${fForm})`} rl={fRl} lowConf={Object.values(fRes||{}).filter(r=>r.result==="correct"&&r.confidence!==undefined&&r.confidence<0.75&&fOv[Object.keys(fRes).find(k=>fRes[k]===r)]===undefined).length} onSave={saveFinal} onReset={resetFinal}/>
-            {[{label:"섹션 A — 번호 찾기",r:[1,25]},{label:"섹션 B — 약어 원형",r:[26,50]},{label:"섹션 C — 참/거짓 (AI 인식 확인)",r:[51,80]},{label:"섹션 D — 빈칸 채우기",r:[81,100]}].map(({label,r:rng})=>{
+            {[{label:"섹션 A — 번호 찾기",r:[1,25]},{label:"섹션 B — 약어 원형",r:[26,50]},{label:"섹션 C — 참/거짓",r:[51,80]},{label:"섹션 D — 빈칸 채우기",r:[81,100]}].map(({label,r:rng})=>{
               const qs=Array.from({length:rng[1]-rng[0]+1},(_,i)=>i+rng[0]);
               const cor=qs.filter(q=>(fOv[q]!==undefined?fOv[q]:fRes[q].result==="correct")).length;
               const rev=qs.filter(q=>fOv[q]===undefined&&fRes[q].result==="review").length;
               const isSecC=rng[0]===51;
               // 섹션C: AI 읽은 답 확인 배너
-              const cNote=isSecC?<div style={{fontSize:12,color:"#553c9a",fontWeight:700,background:"#faf5ff",border:"1px solid #e9d8fd",borderRadius:7,padding:"6px 10px",marginBottom:8}}>👁 AI가 읽은 학생 답안(T/F)을 확인하고 잘못된 경우 O/X로 수정해주세요</div>:null;
+              const cNote=null;
               return(
                 <div key={label} style={card}>
                   <SH label={label} right={{correct:cor,total:qs.length,rev}}/>
-                  {cNote}
+                  {isSecC&&<div style={{display:"grid",gridTemplateColumns:"26px 1fr 1fr 1fr auto",gap:4,padding:"3px 8px",marginBottom:4}}>
+                    <span/><span style={{fontSize:11,color:C.muted,textAlign:"center",fontWeight:700}}>학생</span><span style={{fontSize:11,color:C.muted,textAlign:"center",fontWeight:700}}>정답</span><span style={{fontSize:11,color:C.muted,textAlign:"center",fontWeight:700}}>결과</span><span/>
+                  </div>}
                   {isSecC?(
                     // 섹션 C: 2열 그리드로 공간 절약
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
