@@ -190,8 +190,12 @@ Blank answer = "".`;
 
 const P_ACRONYM = (n) => `You are reading a KATUSA ELT acronym quiz answer sheet photo.
 There are ${n} questions. Each row shows an abbreviation number and the student writes the English full form and Korean translation next to it.
-Extract exactly what the student wrote — do NOT correct spelling errors.
-Join English and Korean with a pipe | character.
+
+EXTRACTION RULES:
+- Extract exactly what the student wrote — do NOT correct spelling errors
+- For Korean text: read carefully even if handwriting is cursive, compressed, or has non-standard spacing. Korean characters may be written close together or with unusual spacing — extract the characters as they appear, preserving all Korean characters faithfully
+- Join English answer and Korean answer with a pipe | character
+
 Return ONLY valid JSON, no markdown: {"answers":{"1":"Central Issue Facility|중앙장비지급소","2":"Change of Command|지휘관 이취임"}}
 Blank="".`;
 
