@@ -127,7 +127,17 @@ function gradeFinal(student, correct, sec) {
     if(matchesAnyWeak(student||"",eng)||matchesAnyWeak(student||"",kor))return"review";
     return"wrong";
   }
-  if(sec==="D"){const v=overlap(student||"",correct);if(v>=0.6)return"correct";if(v>=0.3)return"review";return"wrong";}
+  if(sec==="D"){
+    const studentWords = (student||"").trim().split(/\s+/).filter(Boolean);
+    const correctWords = correct.trim().split(/\s+/).filter(Boolean);
+    const v=overlap(student||"",correct);
+    // If correct answer has 5+ words, student must write enough words (not just the beginning)
+    // Require student to cover at least 50% of correct answer words
+    const coverage = studentWords.length / correctWords.length;
+    if(v>=0.6 && coverage>=0.5)return"correct";
+    if(v>=0.4)return"review";
+    return"wrong";
+  }
   return"wrong";
 }
 
@@ -142,26 +152,28 @@ Also extract the student name and SN (serial number) if visible at the top.
 
 Return ONLY valid JSON, no markdown: {"name":"or null","sn":"or null","A":{"1":"9","2":"17"},"B":{"26":"Defense Readiness Condition|데프콘"}}. Blank="".`;
 
-const P_FINAL2 = `You are reading a KATUSA ELT final exam answer sheet photo.
+const P_FINAL2 = `You are reading a KATUSA ELT exam answer sheet.
 
-Section C (Q51-80): Two columns. Left: Q51-65. Right: Q66-80.
-Each row: question number | T | F
-The student marks ONE letter by drawing a circle, check ✓, slash /, tick, or any mark ON or AROUND that letter.
+SECTION C (questions 51-80):
+The answer sheet has T and F printed in separate columns. Both T and F are already printed — the student chooses one by adding an EXTRA mark (circle, checkmark, slash, tick, X, or any handwriting) ON TOP of their chosen letter.
 
-YOUR TASK: For each question number, identify which letter (T or F) has a mark on it.
+KEY INSIGHT: Both T and F appear printed on the sheet. You must look for the EXTRA handwritten mark that the student added. The letter with the extra mark is the answer.
 
-IMPORTANT:
-- Look at T first: does it have any handwriting/mark on it? If yes → answer is T
-- Look at F: does it have any handwriting/mark on it? If yes → answer is F  
-- The unmarked letter is NOT the answer
-- BOTH T and F have equal probability of being the answer — do not favor T
-- A circle around F = F. A checkmark on F = F. A tick through F = F.
-- A circle around T = T. A checkmark on T = T.
-- Report ONLY the letter that is marked, exactly as: "T" or "F"
+- If the student circled T → answer is T
+- If the student circled F → answer is F  
+- If the student put a checkmark on F → answer is F
+- If the student put a checkmark on T → answer is T
+- The letter WITHOUT an extra mark is NOT chosen
 
-Section D (Q81-100): Student writes keywords/phrases to fill blanks. Extract exactly as written. Do NOT fix spelling errors.
+Do NOT assume the answer is T by default. F is chosen just as often.
+Go through questions 51 to 65 in the left column, then 66 to 80 in the right column.
 
-Return ONLY valid JSON, no markdown: {"C":{"51":"F","52":"T","53":"T","54":"F","55":"T","56":"T","57":"F","58":"F","59":"T","60":"F","61":"T","62":"F","63":"T","64":"F","65":"F","66":"F","67":"T","68":"F","69":"F","70":"T","71":"T","72":"F","73":"T","74":"F","75":"T","76":"F","77":"F","78":"T","79":"T","80":"F"},"D":{"81":"taboos things to avoid doing"}}. Blank="".`;
+SECTION D (questions 81-100):
+Extract exactly what the student wrote. Do NOT fix spelling errors — preserve misspellings exactly as written.
+
+Return ONLY valid JSON, no markdown:
+{"C":{"51":"F","52":"T","53":"T","54":"F","55":"T","56":"T","57":"F","58":"F","59":"T","60":"F","61":"T","62":"F","63":"T","64":"F","65":"F","66":"F","67":"T","68":"F","69":"F","70":"T","71":"T","72":"F","73":"T","74":"F","75":"T","76":"F","77":"F","78":"T","79":"T","80":"F"},"D":{"81":"exact student answer"}}
+Blank answer = "".`;
 
 const P_ACRONYM = (n) => `You are reading a KATUSA ELT acronym quiz answer sheet photo.
 There are ${n} questions. Each row shows an abbreviation number and the student writes the English full form and Korean translation next to it.
