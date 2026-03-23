@@ -396,6 +396,12 @@ function App(){
   const [apiInp,setApiInp]=useState("");
   const [apiOk,setApiOk]=useState(false);
   const [showKey,setShowKey]=useState(false);
+  // CLOVA OCR
+  const [clovaKey,setClovaKey]=useState(()=>localStorage.getItem("elt_clova_key")||"");
+  const [clovaUrl,setClovaUrl]=useState(()=>localStorage.getItem("elt_clova_url")||"");
+  const [clovaInpKey,setClovaInpKey]=useState("");
+  const [clovaInpUrl,setClovaInpUrl]=useState("");
+  const [clovaOk,setClovaOk]=useState(false);
   const [roster,setRoster]=useState([]);
 
   // FINAL state
@@ -432,6 +438,20 @@ function App(){
     setTimeout(()=>setApiOk(false),2000);
   }
   function clearKey(){localStorage.removeItem("elt_api_key");setApiKey("");setApiInp("");}
+  function saveClovaKey(){
+    const k=clovaInpKey.trim(), u=clovaInpUrl.trim();
+    if(!k||!u){alert("Secret Key와 Invoke URL을 모두 입력해주세요");return;}
+    localStorage.setItem("elt_clova_key",k);
+    localStorage.setItem("elt_clova_url",u);
+    setClovaKey(k);setClovaUrl(u);
+    setClovaInpKey("");setClovaInpUrl("");
+    setClovaOk(true);setTimeout(()=>setClovaOk(false),2000);
+  }
+  function clearClovaKey(){
+    localStorage.removeItem("elt_clova_key");
+    localStorage.removeItem("elt_clova_url");
+    setClovaKey("");setClovaUrl("");
+  }
 
   function toB64(f){return new Promise((r,e)=>{const rd=new FileReader();rd.onload=()=>r(rd.result);rd.onerror=e;rd.readAsDataURL(f);});}
 
@@ -449,32 +469,108 @@ function App(){
     return JSON.parse((d.content?.find(b=>b.type==="text")?.text||"{}").replace(/```json|```/g,"").trim());
   }
 
+  // ── CLOVA OCR 호출 (한글 손글씨 특화) ─────────────────────────
+  async function callClovaOcr(imgUrl){
+    if(!clovaKey||!clovaUrl) return null;
+    const b64=imgUrl.split(",")[1];
+    const mime=(imgUrl.match(/data:([^;]+);/)||[])[1]||"image/jpeg";
+    const ext=mime.split("/")[1]||"jpeg";
+    const body={
+      version:"V2",
+      requestId:"elt-"+Date.now(),
+      timestamp:Date.now(),
+      images:[{format:ext,name:"answer_sheet",data:b64}]
+    };
+    try{
+      const r=await fetch(clovaUrl,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","X-OCR-SECRET":clovaKey},
+        body:JSON.stringify(body)
+      });
+      if(!r.ok) return null;
+      const d=await r.json();
+      const fields=d.images?.[0]?.fields||[];
+      // fields를 줄 단위로 그룹화 (y좌표 기준)
+      // 각 field: {inferText, boundingPoly:{vertices}}
+      return fields;
+    }catch(e){
+      console.warn("CLOVA OCR 실패:",e.message);
+      return null;
+    }
+  }
+
+  // CLOVA 결과에서 B섹션 한국어 추출 (각 행의 오른쪽 텍스트)
+  // fields를 행 번호(1~25)별로 그룹화해서 각 행의 오른편 텍스트 추출
+  function extractKorFromClova(fields, totalRows=25){
+    if(!fields||!fields.length) return {};
+    // 전체 이미지 높이 추정 (boundingPoly y좌표 max)
+    const ys=fields.flatMap(f=>f.boundingPoly.vertices.map(v=>v.y));
+    const maxY=Math.max(...ys), minY=Math.min(...ys);
+    const rowH=(maxY-minY)/totalRows;
+
+    // 각 field를 행 인덱스(0~24)에 배정
+    const rows={};
+    fields.forEach(f=>{
+      const cy=f.boundingPoly.vertices.reduce((s,v)=>s+v.y,0)/4;
+      const rowIdx=Math.round((cy-minY)/rowH);
+      const cx=f.boundingPoly.vertices.reduce((s,v)=>s+v.x,0)/4;
+      if(!rows[rowIdx]) rows[rowIdx]=[];
+      rows[rowIdx].push({text:f.inferText,cx,conf:f.inferConfidence||0});
+    });
+
+    // 각 행에서 x좌표 중앙값보다 오른쪽 텍스트 = 한국어 번역
+    const result={};
+    Object.entries(rows).forEach(([ri,items])=>{
+      const qNo=parseInt(ri)+26; // 26~50번
+      if(qNo<26||qNo>50) return;
+      const xs=items.map(i=>i.cx);
+      const medX=(Math.min(...xs)+Math.max(...xs))/2;
+      const korItems=items.filter(i=>i.cx>medX).sort((a,b)=>a.cx-b.cx);
+      const korText=korItems.map(i=>i.text).join("");
+      if(korText) result[qNo]=korText;
+    });
+    return result;
+  }
+
   // ── FINAL handlers ──────────────────────────────────────────
   async function fHP1(file){
     if(!apiKey){setFEr1("⚙ API 키를 먼저 입력해주세요");return;}
     setFEr1("");setFLd1(true);
     const b=await toB64(file);setFImg1(b);
     try{
-      // 1차 호출: 섹션 A + 섹션 B 영어
+      // 1차 호출: 섹션 A + 섹션 B 영어 (Claude)
       setFLd1(1);
-      const d1=await callV(b,P_FINAL1A);
+      const [d1, clovaFields] = await Promise.all([
+        callV(b, P_FINAL1A),
+        callClovaOcr(b)  // CLOVA: 한국어 손글씨 특화 (없으면 null)
+      ]);
       if(d1.name&&!fName)setFName(d1.name);
       if(d1.sn&&!fSn)setFSn(d1.sn);
       const engMap=d1.B_eng||{};
 
-      // 2차 호출: 섹션 B 한국어만 (같은 사진)
+      // 2차 호출: 섹션 B 한국어 (Claude)
       setFLd1(2);
       const d2=await callV(b,P_FINAL1B);
-      const korMap=d2.B_kor||{};
+      const claudeKorMap=d2.B_kor||{};
 
-      // 두 결과 합쳐서 B섹션 구성: "영어|한국어"
+      // CLOVA 한국어 결과 추출
+      const clovaKorMap = clovaFields ? extractKorFromClova(clovaFields) : {};
+
+      // 한국어 병합: CLOVA 결과 우선, 없으면 Claude 결과 사용
+      const korMap={};
+      for(let n=26;n<=50;n++){
+        const ck=clovaKorMap[n]||"";
+        const clk=(claudeKorMap[n]||"").trim();
+        korMap[n] = ck || clk;
+      }
+
+      // B섹션 구성: "영어|한국어"
       const B={};
-      const allNums=new Set([...Object.keys(engMap),...Object.keys(korMap)]);
-      allNums.forEach(n=>{
+      for(let n=26;n<=50;n++){
         const eng=(engMap[n]||"").trim();
         const kor=(korMap[n]||"").trim();
         B[n]=eng&&kor?`${eng}|${kor}`:eng||kor;
-      });
+      }
 
       setFExt(p=>({...p,A:d1.A||{},B}));
     }
@@ -536,19 +632,50 @@ function App(){
     setAEr("");setALd(true);
     const b=await toB64(file);setAImg(b);
     try{
-      // 1차: 영어만
+      // 1차: 영어 (Claude) + CLOVA 병렬
       setALd(1);
-      const d1=await callV(b,P_ACRONYM_ENG(acQs.length));
+      const [d1, clovaFields] = await Promise.all([
+        callV(b, P_ACRONYM_ENG(acQs.length)),
+        callClovaOcr(b)
+      ]);
       const engAns=d1.answers||{};
-      // 2차: 한국어만 (같은 사진)
+
+      // 2차: 한국어 (Claude)
       setALd(2);
       const d2=await callV(b,P_ACRONYM_KOR(acQs.length));
-      const korAns=d2.answers||{};
+      const claudeKorAns=d2.answers||{};
+
+      // CLOVA 한국어 추출 (약어시험: 1~25번 행 기준)
+      const clovaKorMap = clovaFields ? (()=>{
+        const ys=clovaFields.flatMap(f=>f.boundingPoly.vertices.map(v=>v.y));
+        const maxY=Math.max(...ys), minY=Math.min(...ys);
+        const rowH=(maxY-minY)/acQs.length;
+        const rows={};
+        clovaFields.forEach(f=>{
+          const cy=f.boundingPoly.vertices.reduce((s,v)=>s+v.y,0)/4;
+          const rowIdx=Math.round((cy-minY)/rowH);
+          const cx=f.boundingPoly.vertices.reduce((s,v)=>s+v.x,0)/4;
+          if(!rows[rowIdx]) rows[rowIdx]=[];
+          rows[rowIdx].push({text:f.inferText,cx});
+        });
+        const res={};
+        acQs.forEach((q,i)=>{
+          const items=rows[i]||[];
+          const xs=items.map(t=>t.cx);
+          if(!xs.length) return;
+          const medX=(Math.min(...xs)+Math.max(...xs))/2;
+          const korText=items.filter(t=>t.cx>medX).sort((a,b)=>a.cx-b.cx).map(t=>t.text).join("");
+          if(korText) res[q.no]=korText;
+        });
+        return res;
+      })() : {};
 
       const r={};
       acQs.forEach(q=>{
         const eng=(engAns[q.no]||engAns[String(q.no)]||"").trim();
-        const kor=(korAns[q.no]||korAns[String(q.no)]||"").trim();
+        const claudeKor=(claudeKorAns[q.no]||claudeKorAns[String(q.no)]||"").trim();
+        const clovaKor=(clovaKorMap[q.no]||"").trim();
+        const kor=clovaKor||claudeKor;  // CLOVA 우선
         const student=eng&&kor?`${eng}|${kor}`:eng||kor;
         const g=gradeAcronymWithConf(student,q);
         r[q.no]={student,q,...g};
@@ -666,6 +793,27 @@ Blank="".`;
               <div style={{fontSize:11,color:C.muted,marginTop:5,lineHeight:1.6}}>브라우저에만 저장.<br/>발급: console.anthropic.com → API Keys</div>
             </div>
           )}
+
+          {/* CLOVA OCR 설정 */}
+          <div style={{borderTop:`1px solid ${C.border}`,marginTop:14,paddingTop:14}}>
+            <div style={{fontSize:13,fontWeight:800,color:C.text,marginBottom:8}}>🇰🇷 네이버 CLOVA OCR <span style={{fontSize:11,color:C.green,fontWeight:700}}>(한글 손글씨 특화)</span></div>
+            {clovaKey?(
+              <div>
+                <div style={{fontSize:12,color:C.greenD,fontWeight:700,background:C.greenL,border:"1px solid #9ae6b4",borderRadius:7,padding:"5px 9px",marginBottom:6}}>✓ CLOVA OCR 연결됨 — 한글 인식률 향상 활성화</div>
+                <button onClick={clearClovaKey} style={{padding:"4px 10px",borderRadius:7,border:"2px solid #fed7d7",background:C.redL,color:C.redD,cursor:"pointer",fontSize:12,fontWeight:700}}>연결 해제</button>
+              </div>
+            ):(
+              <div>
+                <div style={{fontSize:12,color:C.muted,marginBottom:7,lineHeight:1.6}}>
+                  설정 방법: <a href="https://console.ncloud.com" target="_blank" style={{color:C.blue}}>네이버 클라우드 콘솔</a> → AI Service → CLOVA OCR → 도메인 생성(General) → API Gateway 연동 → Secret Key 발급
+                </div>
+                <input style={{...inp,fontSize:12,marginBottom:6}} value={clovaInpKey} onChange={e=>setClovaInpKey(e.target.value)} placeholder="X-OCR-SECRET (Secret Key)"/>
+                <input style={{...inp,fontSize:12,marginBottom:6}} value={clovaInpUrl} onChange={e=>setClovaInpUrl(e.target.value)} placeholder="API Invoke URL (https://...apigw.ntruss.com/...)"/>
+                <button onClick={saveClovaKey} style={{padding:"8px 12px",borderRadius:9,border:"none",background:"#00b900",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:800,width:"100%"}}>CLOVA 연결하기</button>
+                {clovaOk&&<div style={{fontSize:13,color:C.green,fontWeight:700,marginTop:5}}>✓ 연결됐어요!</div>}
+              </div>
+            )}
+          </div>
         </div>
       </>}
 
