@@ -285,49 +285,27 @@ function SH({label,right}){ return <div style={{fontSize:14,fontWeight:800,color
 const LOW_CONF = 0.75;
 
 // 섹션 C 전용 행 — AI 인식 답안(T/F)과 정답을 나란히 표시, 항상 O/X
-// onStudentChange: 채점자가 학생 답안을 수동으로 T/F 변경
-// 변경 시 정답과 재비교하여 result 자동 업데이트
-function CRow({q,student,correct,result,ov,onOv,onStudentChange}){
-  // 수동 수정된 학생 답안 우선, 없으면 AI 인식값
-  const displayStudent = ov==="T"||ov==="F" ? ov : student;
-  // 채점: 수동 수정값이 있으면 그것으로, 없으면 AI 채점 결과
-  const manualResult = (ov==="T"||ov==="F") ? (ov===correct?"correct":"wrong") : null;
-  const fin = manualResult !== null ? manualResult : result;
-  const isOk = fin==="correct";
-  const isManual = ov==="T"||ov==="F";
-  const bg = isOk ? "transparent" : C.redL;
-  const bd = isOk ? C.border : "#feb2b2";
-
-  // T/F 토글 버튼 스타일
-  const tfBtn=(val)=>({
-    width:26, height:22, borderRadius:5, fontSize:12, fontWeight:900, cursor:"pointer",
-    border:`2px solid ${displayStudent===val?(val==="T"?"#2b6cb0":"#c53030"):C.border}`,
-    background:displayStudent===val?(val==="T"?"#ebf8ff":"#fff5f5"):"transparent",
-    color:displayStudent===val?(val==="T"?"#2b6cb0":"#c53030"):C.muted,
-    transition:"all .1s",
+function CRow({q,student,correct,result,ov,onOv}){
+  const fin=ov!==undefined?(ov?"correct":"wrong"):result;
+  const isOk=fin==="correct";
+  const bg=isOk?"transparent":C.redL;
+  const bd=isOk?C.border:"#feb2b2";
+  const btnStyle=(active,col)=>({
+    width:28,height:24,borderRadius:5,fontSize:12,fontWeight:800,cursor:"pointer",
+    border:`1.5px solid ${active?col:C.border}`,
+    background:active?(col==="#38a169"?C.greenL:C.redL):"transparent",
+    color:active?(col==="#38a169"?C.greenD:C.redD):C.muted,
   });
-
   return(
-    <div style={{display:"grid",gridTemplateColumns:"24px auto 20px 1fr auto",gap:4,alignItems:"center",padding:"5px 7px",borderRadius:7,marginBottom:3,background:bg,border:`1.5px solid ${bd}`}}>
-      <span style={{fontSize:11,color:C.muted,fontWeight:800}}>{q}.</span>
-      {/* T/F 토글 버튼 — 채점자가 직접 수정 */}
-      <div style={{display:"flex",gap:2}}>
-        <button onClick={()=>onStudentChange(q, displayStudent==="T"?null:"T")}
-          style={tfBtn("T")}>T</button>
-        <button onClick={()=>onStudentChange(q, displayStudent==="F"?null:"F")}
-          style={tfBtn("F")}>F</button>
+    <div style={{display:"grid",gridTemplateColumns:"26px 28px 28px 1fr auto",gap:5,alignItems:"center",padding:"5px 8px",borderRadius:7,marginBottom:3,background:bg,border:`1.5px solid ${bd}`}}>
+      <span style={{fontSize:12,color:C.muted,fontWeight:800}}>{q}.</span>
+      <span style={{fontSize:14,fontWeight:900,color:student==="T"?"#2b6cb0":"#c53030",textAlign:"center",background:student==="T"?"#ebf8ff":"#fff5f5",borderRadius:5,padding:"1px 4px"}}>{student||"?"}</span>
+      <span style={{fontSize:12,fontWeight:700,color:C.muted,textAlign:"center"}}>{correct}</span>
+      <span style={{fontSize:12,color:isOk?C.greenD:C.redD,fontWeight:700}}>{isOk?"✓ 일치":"✗ 불일치"}</span>
+      <div style={{display:"flex",gap:3}}>
+        <button onClick={()=>onOv(ov===true?undefined:true)} style={btnStyle(ov===true,"#38a169")}>O</button>
+        <button onClick={()=>onOv(ov===false?undefined:false)} style={btnStyle(ov===false,"#e53e3e")}>X</button>
       </div>
-      {/* 정답 */}
-      <span style={{fontSize:11,fontWeight:700,color:C.muted,textAlign:"center"}}>{correct}</span>
-      {/* 일치여부 + 수동수정 표시 */}
-      <span style={{fontSize:11,color:isOk?C.greenD:C.redD,fontWeight:700}}>
-        {isOk?"✓":"✗"}{isManual&&<span style={{color:"#744210",fontSize:10}}> 수정됨</span>}
-      </span>
-      {/* 수정 취소 버튼 — 수동 수정된 경우만 표시 */}
-      {isManual&&(
-        <button onClick={()=>onStudentChange(q,null)}
-          style={{fontSize:10,padding:"1px 5px",borderRadius:4,border:`1px solid ${C.border}`,background:C.white,color:C.muted,cursor:"pointer",fontWeight:700}}>↩</button>
-      )}
     </div>
   );
 }
@@ -516,27 +494,7 @@ function App(){
     for(let i=81;i<=100;i++){const g=gradeFinalWithConf(fExt.D?.[i]||"",k.D[i],"D"); r[i]={sec:"D",student:fExt.D?.[i]||"",correct:k.D[i],...g};}
     setFRes(r);setFOv({});
   }
-  function fScore(){
-    if(!fRes)return 0;
-    let s=0;
-    for(let i=1;i<=100;i++){
-      const ov=fOv[i];
-      let fin;
-      if(fRes[i].sec==="C"){
-        // C섹션: ov가 "T"/"F"면 정답과 비교, true/false면 override
-        if(ov==="T"||ov==="F") fin=ov===fRes[i].correct?"correct":"wrong";
-        else if(ov===true) fin="correct";
-        else if(ov===false) fin="wrong";
-        else fin=fRes[i].result;
-      } else {
-        if(ov===true) fin="correct";
-        else if(ov===false) fin="wrong";
-        else fin=fRes[i].result;
-      }
-      if(fin==="correct")s++;
-    }
-    return s;
-  }
+  function fScore(){if(!fRes)return 0;let s=0;for(let i=1;i<=100;i++){const f=fOv[i]!==undefined?(fOv[i]?"correct":"wrong"):fRes[i].result;if(f==="correct")s++;}return s;}
   function fRL(){if(!fRes)return 0;return Object.entries(fRes).filter(([,r])=>fOv[r]===undefined&&r.result==="review").length;}
   function fReviewLeft(){if(!fRes)return 0;return Object.values(fRes).filter((r,i)=>fOv[i+1]===undefined&&r.result==="review").length;}
   function saveFinal(){
@@ -548,13 +506,7 @@ function App(){
 
   const fCanGrade=fExt.A&&Object.keys(fExt.A).length>0&&fExt.C&&Object.keys(fExt.C).length>0;
   const fSc=fScore();
-  const fRl=Object.entries(fRes||{}).filter(([q,r])=>{
-    const ov=fOv[q];
-    // C섹션: T/F 수동 수정했으면 검토 완료
-    if(r.sec==="C") return false;
-    // 나머지: review 상태이고 아직 O/X 안 누른 것
-    return ov===undefined&&r.result==="review";
-  }).length;
+  const fRl=Object.entries(fRes||{}).filter(([q,r])=>fOv[q]===undefined&&r.result==="review").length;
 
   // ── ACRONYM handlers ────────────────────────────────────────
   const acKey=`Form${aForm}_${aDay}`;
@@ -761,12 +713,7 @@ Blank="".`;
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
                       {qs.map(q=>{
                         const r=fRes[q];
-                        return<CRow key={q} q={q} student={r.student} correct={r.correct} result={r.result} ov={fOv[q]}
-                          onOv={v=>{if(v===undefined){setFOv(p=>{const n={...p};delete n[q];return n;});}else setFOv(p=>({...p,[q]:v}));}}
-                          onStudentChange={(qn,val)=>{
-                            if(val===null){setFOv(p=>{const n={...p};delete n[qn];return n;});}
-                            else setFOv(p=>({...p,[qn]:val}));
-                          }}/>;
+                        return<CRow key={q} q={q} student={r.student} correct={r.correct} result={r.result} ov={fOv[q]} onOv={v=>{if(v===undefined){setFOv(p=>{const n={...p};delete n[q];return n;});}else setFOv(p=>({...p,[q]:v}));}}/>;
                       })}
                     </div>
                   ):(
