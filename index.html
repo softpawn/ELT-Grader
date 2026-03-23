@@ -548,15 +548,19 @@ function App(){
       if(d1.sn&&!fSn)setFSn(d1.sn);
       const engMap=d1.B_eng||{};
 
-      // 2차 호출: 섹션 B 한국어 (Claude)
-      setFLd1(2);
-      const d2=await callV(b,P_FINAL1B);
-      const claudeKorMap=d2.B_kor||{};
-
-      // CLOVA 한국어 결과 추출
+      // 2차 호출: 섹션 B 한국어
+      // CLOVA 성공 시 Claude 한국어 호출 스킵 (비용/시간 절약)
       const clovaKorMap = clovaFields ? extractKorFromClova(clovaFields) : {};
+      const clovaSuccess = Object.keys(clovaKorMap).length > 0;
 
-      // 한국어 병합: CLOVA 결과 우선, 없으면 Claude 결과 사용
+      let claudeKorMap = {};
+      if(!clovaSuccess){
+        setFLd1(2);
+        const d2=await callV(b,P_FINAL1B);
+        claudeKorMap=d2.B_kor||{};
+      }
+
+      // 한국어 병합: CLOVA 우선, 실패시 Claude
       const korMap={};
       for(let n=26;n<=50;n++){
         const ck=clovaKorMap[n]||"";
@@ -640,11 +644,7 @@ function App(){
       ]);
       const engAns=d1.answers||{};
 
-      // 2차: 한국어 (Claude)
-      setALd(2);
-      const d2=await callV(b,P_ACRONYM_KOR(acQs.length));
-      const claudeKorAns=d2.answers||{};
-
+      // 2차: 한국어 — CLOVA 성공시 Claude 스킵
       // CLOVA 한국어 추출 (약어시험: 1~25번 행 기준)
       const clovaKorMap = clovaFields ? (()=>{
         const ys=clovaFields.flatMap(f=>f.boundingPoly.vertices.map(v=>v.y));
@@ -669,6 +669,15 @@ function App(){
         });
         return res;
       })() : {};
+
+      // CLOVA 실패시에만 Claude 한국어 호출
+      const clovaSuccess2 = Object.keys(clovaKorMap).length > 0;
+      let claudeKorAns = {};
+      if(!clovaSuccess2){
+        setALd(2);
+        const d2=await callV(b,P_ACRONYM_KOR(acQs.length));
+        claudeKorAns=d2.answers||{};
+      }
 
       const r={};
       acQs.forEach(q=>{
