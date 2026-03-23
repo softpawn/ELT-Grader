@@ -73,6 +73,16 @@ const MATCHING_KEYS = {
 // HELPERS
 // ─────────────────────────────────────────────────────────────
 function norm(s){ return (s||"").toLowerCase().replace(/[^a-z0-9가-힣\s]/g," ").replace(/\s+/g," ").trim(); }
+function normKor(s){ return (s||"").replace(/\s+/g,"").toLowerCase(); }  // 한국어: 띄어쓰기 무시
+function overlapKor(a, b){
+  // For Korean: also try space-stripped comparison
+  const na=normKor(a), nb=normKor(b);
+  if(!na||!nb) return 0;
+  if(na===nb) return 1;
+  if(na.includes(nb)||nb.includes(na)) return 0.9;
+  // fallback to word overlap
+  return overlap(a,b);
+}
 function overlap(a,b){ const wa=new Set(norm(a).split(" ").filter(Boolean)),wb=norm(b).split(" ").filter(Boolean); if(!wa.size||!wb.length)return 0; return wb.filter(w=>wa.has(w)).length/Math.max(wa.size,wb.length); }
 
 function expandAlts(correct) {
@@ -91,24 +101,25 @@ function expandAlts(correct) {
   });
   return [...new Set(alts.filter(Boolean))];
 }
-function matchesAny(student, correct) {
+function matchesAny(student, correct, isKor=false) {
   const alts = expandAlts(correct);
+  if(isKor) return alts.some(alt => overlapKor(student, alt) >= 0.85);
   return alts.some(alt => overlap(student, alt) >= 0.65);
 }
-function matchesAnyWeak(student, correct) {
+function matchesAnyWeak(student, correct, isKor=false) {
   const alts = expandAlts(correct);
+  if(isKor) return alts.some(alt => overlapKor(student, alt) >= 0.6);
   return alts.some(alt => overlap(student, alt) >= 0.4);
 }
 function gradeAcronym(student, q) {
   const parts = (student||"").split("|");
   const engAns = (parts[0]||"").trim();
   const korAns = (parts[1]||"").trim();
-  const eok = matchesAny(engAns, q.full);
-  const kok = matchesAny(korAns, q.kor);
+  const eok = matchesAny(engAns, q.full, false);
+  const kok = matchesAny(korAns, q.kor, true);
   if(eok && kok) return "correct";
   if(eok || kok) return "review";
-  // try whole string against either
-  if(matchesAnyWeak(student||"", q.full) || matchesAnyWeak(student||"", q.kor)) return "review";
+  if(matchesAnyWeak(student||"", q.full, false) || matchesAnyWeak(student||"", q.kor, true)) return "review";
   return "wrong";
 }
 
@@ -122,9 +133,9 @@ function gradeFinal(student, correct, sec) {
   if(sec==="B"){
     const[eng,kor]=correct,parts=(student||"").split("|");
     const engAns=(parts[0]||"").trim(), korAns=(parts[1]||"").trim();
-    const eok=matchesAny(engAns,eng), kok=matchesAny(korAns,kor);
+    const eok=matchesAny(engAns,eng,false), kok=matchesAny(korAns,kor,true);
     if(eok&&kok)return"correct"; if(eok||kok)return"review";
-    if(matchesAnyWeak(student||"",eng)||matchesAnyWeak(student||"",kor))return"review";
+    if(matchesAnyWeak(student||"",eng,false)||matchesAnyWeak(student||"",kor,true))return"review";
     return"wrong";
   }
   if(sec==="D"){
@@ -146,7 +157,9 @@ const P_FINAL1 = `You are reading a KATUSA ELT final exam answer sheet photo.
 
 Section A (Q1-25): The student writes a number in the blank next to each question number. Extract that number exactly as written. If the student crossed out a number and rewrote it, use the final written number.
 
-Section B (Q26-50): The student writes the English full form and Korean translation for each acronym. Join them with a pipe character |. Extract exactly what is written — do NOT correct spelling errors.
+Section B (Q26-50): The student writes the English full form and Korean translation for each acronym, separated by a pipe | character or written in two parts.
+For Korean text: read carefully even if handwriting is cursive or compressed. Korean spacing may differ from standard — extract the characters as written.
+Join English and Korean with | in your output. Do NOT correct spelling errors.
 
 Also extract the student name and SN (serial number) if visible at the top.
 
@@ -207,6 +220,15 @@ function RRow({q,student,correct,correctStr,result,ov,onOv}){
   const bg=fin==="correct"?"transparent":fin==="review"?C.yellowL:C.redL;
   const bd=fin==="correct"?C.border:fin==="review"?"#f6e05e":"#feb2b2";
   const tc=fin==="correct"?C.greenD:fin==="review"?C.yellow:C.redD;
+  // O/X 버튼: 항상 표시. correct면 연하게, wrong/review면 강조
+  const btnStyle = (active, color) => ({
+    width:30, height:26, borderRadius:6,
+    border:`1.5px solid ${active?color:fin==="correct"?"#e8f5e9":C.border}`,
+    background:active?(color==="#38a169"?C.greenL:C.redL):"transparent",
+    color:active?(color==="#38a169"?C.greenD:C.redD):(fin==="correct"?"#c8e6c9":C.muted),
+    cursor:"pointer", fontSize:13, fontWeight:800,
+    opacity: fin==="correct"&&ov===undefined ? 0.45 : 1,
+  });
   return(
     <div style={{display:"grid",gridTemplateColumns:"28px 1fr auto",gap:8,alignItems:"start",padding:"8px 10px",borderRadius:8,marginBottom:4,background:bg,border:`1.5px solid ${bd}`}}>
       <span style={{fontSize:13,color:C.muted,fontWeight:800,paddingTop:2}}>{q}.</span>
@@ -214,12 +236,12 @@ function RRow({q,student,correct,correctStr,result,ov,onOv}){
         <div style={{fontSize:14,fontWeight:700,color:tc,wordBreak:"break-all"}}>{student||<em style={{color:C.muted,fontWeight:400}}>미입력</em>}</div>
         {fin!=="correct"&&<div style={{fontSize:12,color:C.muted,marginTop:3}}>정답: <span style={{color:C.blue,fontWeight:700}}>{correctStr}</span></div>}
       </div>
-      <div style={{display:"flex",gap:4,alignItems:"center"}}>
-        {(result==="review"||ov!==undefined)&&<>
-          <button onClick={()=>onOv(true)}  style={{width:34,height:30,borderRadius:7,border:`2px solid ${ov===true?C.green:C.border}`,background:ov===true?C.greenL:C.white,color:ov===true?C.greenD:C.muted,cursor:"pointer",fontSize:15,fontWeight:800}}>O</button>
-          <button onClick={()=>onOv(false)} style={{width:34,height:30,borderRadius:7,border:`2px solid ${ov===false?C.red:C.border}`,background:ov===false?C.redL:C.white,color:ov===false?C.redD:C.muted,cursor:"pointer",fontSize:15,fontWeight:800}}>X</button>
-        </>}
-        <span style={{fontSize:14}}>{fin==="correct"?"✅":fin==="review"?"⚠️":"❌"}</span>
+      <div style={{display:"flex",gap:3,alignItems:"center"}}>
+        <button onClick={()=>onOv(ov===true?undefined:true)}
+          style={btnStyle(ov===true,"#38a169")}>O</button>
+        <button onClick={()=>onOv(ov===false?undefined:false)}
+          style={btnStyle(ov===false,"#e53e3e")}>X</button>
+        <span style={{fontSize:14,marginLeft:2}}>{fin==="correct"?"✅":fin==="review"?"⚠️":"❌"}</span>
       </div>
     </div>
   );
@@ -554,7 +576,7 @@ Blank="".`;
                   {qs.map(q=>{
                     const r=fRes[q];
                     const cs=r.sec==="B"?`${r.correct[0]} / ${r.correct[1]}`:String(r.correct);
-                    return<RRow key={q} q={q} student={r.student} correct={r.correct} correctStr={cs} result={r.result} ov={fOv[q]} onOv={v=>setFOv(p=>({...p,[q]:v}))}/>;
+                    return<RRow key={q} q={q} student={r.student} correct={r.correct} correctStr={cs} result={r.result} ov={fOv[q]} onOv={v=>{if(v===undefined){setFOv(p=>{const n={...p};delete n[q];return n;});}else setFOv(p=>({...p,[q]:v}));}}/>;
                   })}
                 </div>
               );
@@ -607,7 +629,7 @@ Blank="".`;
               <SH label="채점 결과" right={{correct:aSc,total:acQs.length,rev:aRl}}/>
               {acQs.map(q=>{
                 const r=aRes[q.no];
-                return<RRow key={q.no} q={q.no} student={r?.student||""} correctStr={`${q.full} / ${q.kor}`} result={r?.result||"wrong"} ov={aOv[q.no]} onOv={v=>setAOv(p=>({...p,[q.no]:v}))}/>;
+                return<RRow key={q.no} q={q.no} student={r?.student||""} correctStr={`${q.full} / ${q.kor}`} result={r?.result||"wrong"} ov={aOv[q.no]} onOv={v=>{if(v===undefined){setAOv(p=>{const n={...p};delete n[q.no];return n;});}else setAOv(p=>({...p,[q.no]:v}));}}/>;
               })}
             </div>
             <button onClick={saveAcronym} disabled={aRl>0} style={{background:aRl>0?"#cbd5e0":C.blue,color:"#fff",border:"none",borderRadius:10,padding:"15px",fontSize:16,fontWeight:800,cursor:aRl>0?"not-allowed":"pointer",width:"100%",opacity:aRl>0?.5:1}}>
@@ -665,7 +687,7 @@ Blank="".`;
               <SH label="채점 결과" right={{correct:mSc,total:mtQs.length,rev:mRl}}/>
               {mtQs.map(q=>{
                 const r=mRes[q.no];
-                return<RRow key={q.no} q={q.no} student={r?.student||""} correctStr={`${q.answer} (${q.term})`} result={r?.result||"wrong"} ov={mOv[q.no]} onOv={v=>setMOv(p=>({...p,[q.no]:v}))}/>;
+                return<RRow key={q.no} q={q.no} student={r?.student||""} correctStr={`${q.answer} (${q.term})`} result={r?.result||"wrong"} ov={mOv[q.no]} onOv={v=>{if(v===undefined){setMOv(p=>{const n={...p};delete n[q.no];return n;});}else setMOv(p=>({...p,[q.no]:v}));}}/>;
               })}
             </div>
             <button onClick={saveMatching} disabled={mRl>0} style={{background:mRl>0?"#cbd5e0":C.blue,color:"#fff",border:"none",borderRadius:10,padding:"15px",fontSize:16,fontWeight:800,cursor:mRl>0?"not-allowed":"pointer",width:"100%",opacity:mRl>0?.5:1}}>
