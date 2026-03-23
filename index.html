@@ -127,43 +127,94 @@ function gradeMatching(student, correctAnswer) {
   return parseInt(student) === correctAnswer ? "correct" : "wrong";
 }
 
-function gradeFinal(student, correct, sec) {
-  if(sec==="A") return parseInt(student)===parseInt(correct)?"correct":"wrong";
-  if(sec==="C") return (student||"").toUpperCase().trim()===correct?"correct":"wrong";
+// 신뢰도 포함 채점 — {result, confidence}
+function scoreB(student, eng, kor){
+  const parts=(student||"").split("|");
+  const engAns=(parts[0]||"").trim(), korAns=(parts[1]||"").trim();
+  const engAlts=expandAlts(eng), korAlts=expandAlts(kor);
+  const eScore=Math.max(...engAlts.map(a=>overlap(engAns,a)));
+  const kScore=Math.max(...korAlts.map(a=>overlapKor(korAns,a)));
+  return {eScore, kScore};
+}
+function gradeFinalWithConf(student, correct, sec){
+  if(sec==="A"){
+    const ok=parseInt(student)===parseInt(correct);
+    return {result:ok?"correct":"wrong", confidence:ok?1:0};
+  }
+  if(sec==="C"){
+    const ok=(student||"").toUpperCase().trim()===correct;
+    return {result:ok?"correct":"wrong", confidence:ok?1:0};
+  }
   if(sec==="B"){
-    const[eng,kor]=correct,parts=(student||"").split("|");
-    const engAns=(parts[0]||"").trim(), korAns=(parts[1]||"").trim();
-    const eok=matchesAny(engAns,eng,false), kok=matchesAny(korAns,kor,true);
-    if(eok&&kok)return"correct"; if(eok||kok)return"review";
-    if(matchesAnyWeak(student||"",eng,false)||matchesAnyWeak(student||"",kor,true))return"review";
-    return"wrong";
+    const[eng,kor]=correct;
+    const{eScore,kScore}=scoreB(student,eng,kor);
+    const conf=Math.min((eScore+kScore)/2, 1);
+    if(eScore>=0.65&&kScore>=0.85)return{result:"correct",confidence:conf};
+    if(eScore>=0.65||kScore>=0.85)return{result:"review",confidence:conf};
+    if(eScore>=0.4||kScore>=0.6)return{result:"review",confidence:conf*0.5};
+    return{result:"wrong",confidence:conf};
   }
   if(sec==="D"){
-    const studentWords = (student||"").trim().split(/\s+/).filter(Boolean);
-    const correctWords = correct.trim().split(/\s+/).filter(Boolean);
+    const sw=(student||"").trim().split(/\s+/).filter(Boolean);
+    const cw=correct.trim().split(/\s+/).filter(Boolean);
     const v=overlap(student||"",correct);
-    // If correct answer has 5+ words, student must write enough words (not just the beginning)
-    // Require student to cover at least 50% of correct answer words
-    const coverage = studentWords.length / correctWords.length;
-    if(v>=0.6 && coverage>=0.5)return"correct";
-    if(v>=0.4)return"review";
-    return"wrong";
+    const cov=sw.length/cw.length;
+    const conf=v*Math.min(cov,1);
+    if(v>=0.6&&cov>=0.5)return{result:"correct",confidence:conf};
+    if(v>=0.4)return{result:"review",confidence:conf*0.6};
+    return{result:"wrong",confidence:conf};
   }
-  return"wrong";
+  return{result:"wrong",confidence:0};
+}
+function gradeFinal(student, correct, sec){
+  return gradeFinalWithConf(student,correct,sec).result;
+}
+
+function gradeAcronymWithConf(student, q){
+  const parts=(student||"").split("|");
+  const engAns=(parts[0]||"").trim(), korAns=(parts[1]||"").trim();
+  const engAlts=expandAlts(q.full), korAlts=expandAlts(q.kor);
+  const eScore=Math.max(...engAlts.map(a=>overlap(engAns,a)));
+  const kScore=Math.max(...korAlts.map(a=>overlapKor(korAns,a)));
+  const conf=Math.min((eScore+kScore)/2,1);
+  if(eScore>=0.65&&kScore>=0.85)return{result:"correct",confidence:conf};
+  if(eScore>=0.65||kScore>=0.85)return{result:"review",confidence:conf};
+  if(eScore>=0.4||kScore>=0.6)return{result:"review",confidence:conf*0.5};
+  return{result:"wrong",confidence:conf};
 }
 
 // OCR Prompts
-const P_FINAL1 = `You are reading a KATUSA ELT final exam answer sheet photo.
+const P_FINAL1A = `You are reading a KATUSA ELT final exam answer sheet photo.
 
-Section A (Q1-25): The student writes a number in the blank next to each question number. Extract that number exactly as written. If the student crossed out a number and rewrote it, use the final written number.
+Extract the following:
 
-Section B (Q26-50): The student writes the English full form and Korean translation for each acronym, separated by a pipe | character or written in two parts.
-For Korean text: read carefully even if handwriting is cursive or compressed. Korean spacing may differ from standard — extract the characters as written.
-Join English and Korean with | in your output. Do NOT correct spelling errors.
+1. Student name and SN at the top of the sheet (if visible).
 
-Also extract the student name and SN (serial number) if visible at the top.
+2. Section A (Q1-25): Each row has a question number and a blank where the student wrote a number. Extract that number. If crossed out and rewritten, use the final number.
 
-Return ONLY valid JSON, no markdown: {"name":"or null","sn":"or null","A":{"1":"9","2":"17"},"B":{"26":"Defense Readiness Condition|데프콘"}}. Blank="".`;
+3. Section B (Q26-50) — ENGLISH ONLY: Each row has an acronym number and the student wrote an English full form. Extract ONLY the English text. Ignore any Korean text.
+
+Return ONLY valid JSON, no markdown:
+{"name":"or null","sn":"or null","A":{"1":"42","2":"17"},"B_eng":{"26":"Defense Readiness Condition","27":"Controlled Unclassified Information"}}
+Blank="".`;
+
+const P_FINAL1B = `You are reading a KATUSA ELT final exam answer sheet photo.
+
+Your ONLY task: read the Korean translation column in Section B (Q26-50).
+
+The sheet has questions 26 to 50. Each row has a question number, an English acronym full form in the middle, and a Korean translation written on the RIGHT side.
+
+Read ONLY the Korean text on the right side for each question number 26 through 50.
+
+KOREAN READING GUIDELINES:
+- Read each syllable block carefully (e.g. 데프콘, 야전전투조끼)
+- Characters may be compressed or cursive — do your best to identify each one
+- Include spacing if present but do not add spaces that are not there
+- Do NOT translate or correct — write exactly what is written
+
+Return ONLY valid JSON, no markdown:
+{"B_kor":{"26":"데프콘","27":"비공개 군사 자료","28":"야전전투조끼","29":"험비"}}
+Blank="".`;
 
 const P_FINAL2 = `You are reading a KATUSA ELT exam answer sheet.
 
@@ -188,15 +239,26 @@ Return ONLY valid JSON, no markdown:
 {"C":{"51":"F","52":"T","53":"T","54":"F","55":"T","56":"T","57":"F","58":"F","59":"T","60":"F","61":"T","62":"F","63":"T","64":"F","65":"F","66":"F","67":"T","68":"F","69":"F","70":"T","71":"T","72":"F","73":"T","74":"F","75":"T","76":"F","77":"F","78":"T","79":"T","80":"F"},"D":{"81":"exact student answer"}}
 Blank answer = "".`;
 
-const P_ACRONYM = (n) => `You are reading a KATUSA ELT acronym quiz answer sheet photo.
-There are ${n} questions. Each row shows an abbreviation number and the student writes the English full form and Korean translation next to it.
+const P_ACRONYM_ENG = (n) => `You are reading a KATUSA ELT acronym quiz answer sheet photo.
+There are ${n} questions. Each row has a number and the student wrote an English full form and a Korean translation.
 
-EXTRACTION RULES:
-- Extract exactly what the student wrote — do NOT correct spelling errors
-- For Korean text: read carefully even if handwriting is cursive, compressed, or has non-standard spacing. Korean characters may be written close together or with unusual spacing — extract the characters as they appear, preserving all Korean characters faithfully
-- Join English answer and Korean answer with a pipe | character
+Extract ONLY the English full form for each question number. Ignore Korean text.
+Do NOT correct spelling errors.
 
-Return ONLY valid JSON, no markdown: {"answers":{"1":"Central Issue Facility|중앙장비지급소","2":"Change of Command|지휘관 이취임"}}
+Return ONLY valid JSON, no markdown: {"answers":{"1":"Central Issue Facility","2":"Change of Command"}}
+Blank="".`;
+
+  const P_ACRONYM_KOR = (n) => `You are reading a KATUSA ELT acronym quiz answer sheet photo.
+There are ${n} questions. Each row has a number. The student wrote a Korean translation on the right side.
+
+Read ONLY the Korean text for each question number.
+
+KOREAN READING GUIDELINES:
+- Read each Korean syllable block carefully
+- Characters may be compressed or cursive — identify each one precisely
+- Write exactly what is written, do not correct or translate
+
+Return ONLY valid JSON, no markdown: {"answers":{"1":"중앙장비지급소","2":"지휘관 이취임"}}
 Blank="".`;
 
 const P_MATCHING = (n) => `You are reading a KATUSA ELT matching quiz answer sheet photo.
@@ -219,19 +281,52 @@ const inp = {background:"#f7fafc",border:`2px solid ${C.border}`,borderRadius:10
 
 function SH({label,right}){ return <div style={{fontSize:14,fontWeight:800,color:C.text,paddingBottom:10,borderBottom:`2px solid ${C.border}`,marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>{label}</span>{right&&<span style={{color:right.rev>0?C.yellow:C.green,fontWeight:800}}>{right.correct}/{right.total}{right.rev>0?` (검토 ${right.rev})`:" ✓"}</span>}</div>; }
 
-function RRow({q,student,correct,correctStr,result,ov,onOv}){
+// 신뢰도 낮은 정답: confidence < 0.75 이면 "요확인" 표시
+const LOW_CONF = 0.75;
+
+// 섹션 C 전용 행 — AI 인식 답안(T/F)과 정답을 나란히 표시, 항상 O/X
+function CRow({q,student,correct,result,ov,onOv}){
   const fin=ov!==undefined?(ov?"correct":"wrong"):result;
+  const isOk=fin==="correct";
+  const bg=isOk?"transparent":C.redL;
+  const bd=isOk?C.border:"#feb2b2";
+  const btnStyle=(active,col)=>({
+    width:28,height:24,borderRadius:5,fontSize:12,fontWeight:800,cursor:"pointer",
+    border:`1.5px solid ${active?col:C.border}`,
+    background:active?(col==="#38a169"?C.greenL:C.redL):"transparent",
+    color:active?(col==="#38a169"?C.greenD:C.redD):C.muted,
+  });
+  return(
+    <div style={{display:"grid",gridTemplateColumns:"26px 28px 28px 1fr auto",gap:5,alignItems:"center",padding:"5px 8px",borderRadius:7,marginBottom:3,background:bg,border:`1.5px solid ${bd}`}}>
+      <span style={{fontSize:12,color:C.muted,fontWeight:800}}>{q}.</span>
+      {/* AI가 읽은 학생 답안 */}
+      <span style={{fontSize:14,fontWeight:900,color:student==="T"?"#2b6cb0":"#c53030",textAlign:"center",background:student==="T"?"#ebf8ff":"#fff5f5",borderRadius:5,padding:"1px 4px"}}>{student||"?"}</span>
+      {/* 정답 */}
+      <span style={{fontSize:12,fontWeight:700,color:C.muted,textAlign:"center"}}>{correct}</span>
+      {/* 일치여부 */}
+      <span style={{fontSize:12,color:isOk?C.greenD:C.redD,fontWeight:700}}>{isOk?"✓ 일치":"✗ 불일치"}</span>
+      <div style={{display:"flex",gap:3}}>
+        <button onClick={()=>onOv(ov===true?undefined:true)} style={btnStyle(ov===true,"#38a169")}>O</button>
+        <button onClick={()=>onOv(ov===false?undefined:false)} style={btnStyle(ov===false,"#e53e3e")}>X</button>
+      </div>
+    </div>
+  );
+}
+
+function RRow({q,student,correct,correctStr,result,ov,onOv,confidence}){
+  const fin=ov!==undefined?(ov?"correct":"wrong"):result;
+  // 정답이지만 신뢰도 낮으면 주황 테두리로 표시
+  const lowConf = fin==="correct" && confidence!==undefined && confidence<LOW_CONF && ov===undefined;
   const bg=fin==="correct"?"transparent":fin==="review"?C.yellowL:C.redL;
-  const bd=fin==="correct"?C.border:fin==="review"?"#f6e05e":"#feb2b2";
+  const bd=lowConf?"#f6ad55":fin==="correct"?C.border:fin==="review"?"#f6e05e":"#feb2b2";
   const tc=fin==="correct"?C.greenD:fin==="review"?C.yellow:C.redD;
-  // O/X 버튼: 항상 표시. correct면 연하게, wrong/review면 강조
   const btnStyle = (active, color) => ({
     width:30, height:26, borderRadius:6,
     border:`1.5px solid ${active?color:fin==="correct"?"#e8f5e9":C.border}`,
     background:active?(color==="#38a169"?C.greenL:C.redL):"transparent",
     color:active?(color==="#38a169"?C.greenD:C.redD):(fin==="correct"?"#c8e6c9":C.muted),
     cursor:"pointer", fontSize:13, fontWeight:800,
-    opacity: fin==="correct"&&ov===undefined ? 0.45 : 1,
+    opacity: fin==="correct"&&!lowConf&&ov===undefined ? 0.45 : 1,
   });
   return(
     <div style={{display:"grid",gridTemplateColumns:"28px 1fr auto",gap:8,alignItems:"start",padding:"8px 10px",borderRadius:8,marginBottom:4,background:bg,border:`1.5px solid ${bd}`}}>
@@ -239,13 +334,14 @@ function RRow({q,student,correct,correctStr,result,ov,onOv}){
       <div>
         <div style={{fontSize:14,fontWeight:700,color:tc,wordBreak:"break-all"}}>{student||<em style={{color:C.muted,fontWeight:400}}>미입력</em>}</div>
         {fin!=="correct"&&<div style={{fontSize:12,color:C.muted,marginTop:3}}>정답: <span style={{color:C.blue,fontWeight:700}}>{correctStr}</span></div>}
+        {lowConf&&<div style={{fontSize:11,color:"#c05621",fontWeight:700,marginTop:2}}>⚠ 요확인 (신뢰도 {Math.round(confidence*100)}%)</div>}
       </div>
       <div style={{display:"flex",gap:3,alignItems:"center"}}>
         <button onClick={()=>onOv(ov===true?undefined:true)}
           style={btnStyle(ov===true,"#38a169")}>O</button>
         <button onClick={()=>onOv(ov===false?undefined:false)}
           style={btnStyle(ov===false,"#e53e3e")}>X</button>
-        <span style={{fontSize:14,marginLeft:2}}>{fin==="correct"?"✅":fin==="review"?"⚠️":"❌"}</span>
+        <span style={{fontSize:14,marginLeft:2}}>{fin==="correct"?(lowConf?"🟡":"✅"):fin==="review"?"⚠️":"❌"}</span>
       </div>
     </div>
   );
@@ -256,7 +352,7 @@ function PhotoBox({img,loading,count,label,sub,onTap,err,ref:r}){
     <div style={card}>
       <SH label={label}/>
       <div onClick={onTap} style={{border:`2.5px dashed ${img?C.green:C.muted}`,borderRadius:12,padding:14,textAlign:"center",cursor:"pointer",background:img?C.greenL:"#f7fafc",minHeight:120,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8}}>
-        {loading?<><div style={{fontSize:26,animation:"spin 1s linear infinite"}}>⚙️</div><div style={{fontSize:14,fontWeight:700,color:C.muted}}>인식 중...</div></>
+        {loading?<><div style={{fontSize:26,animation:"spin 1s linear infinite"}}>⚙️</div><div style={{fontSize:14,fontWeight:700,color:C.muted}}>{loading===2?"한국어 인식 중... (2/2)":"영어 인식 중... (1/2)"}</div></>
         :img?<><img src={img} style={{maxHeight:70,borderRadius:8,maxWidth:"100%"}}/><div style={{fontSize:13,fontWeight:800,color:C.greenD}}>✓ {count}문항 인식</div><div style={{fontSize:12,color:C.blue,fontWeight:700}}>탭하여 재촬영</div></>
         :<><div style={{fontSize:34}}>📷</div><div style={{fontSize:15,color:C.blue,fontWeight:800}}>촬영하기</div>{sub&&<div style={{fontSize:12,color:C.muted,fontWeight:600}}>{sub}</div>}</>}
       </div>
@@ -265,7 +361,7 @@ function PhotoBox({img,loading,count,label,sub,onTap,err,ref:r}){
   );
 }
 
-function ScoreHeader({score,total,name,sn,subtitle,rl,onSave,onReset}){
+function ScoreHeader({score,total,name,sn,subtitle,rl,lowConf=0,onSave,onReset}){
   const pct=total>0?Math.round(score/total*100):0;
   const sc=score>=total*0.8?C.greenD:score>=total*0.6?C.yellow:C.redD;
   const bg=score>=total*0.8?C.greenL:score>=total*0.6?C.yellowL:C.redL;
@@ -280,6 +376,7 @@ function ScoreHeader({score,total,name,sn,subtitle,rl,onSave,onReset}){
         <div style={{fontWeight:800,fontSize:17,color:C.text}}>{name||"이름 없음"} <span style={{color:C.muted,fontWeight:600,fontSize:14}}>{sn}</span></div>
         <div style={{fontSize:13,fontWeight:700,color:C.muted,marginTop:3}}>{subtitle}</div>
         {rl>0&&<div style={{marginTop:8,fontSize:13,fontWeight:700,color:"#744210",background:C.yellowL,border:"2px solid #f6c90e",borderRadius:8,padding:"6px 10px"}}>⚠ 검토 {rl}문항 — O/X 후 저장</div>}
+        {lowConf>0&&rl===0&&<div style={{marginTop:8,fontSize:12,fontWeight:700,color:"#c05621",background:"#fffaf0",border:"2px solid #f6ad55",borderRadius:8,padding:"5px 10px"}}>🟡 신뢰도 낮은 정답 {lowConf}문항 확인 권장</div>}
       </div>
       <div style={{display:"flex",flexDirection:"column",gap:6}}>
         <button onClick={onSave} disabled={rl>0} style={{padding:"10px 14px",borderRadius:9,border:"none",background:rl>0?"#cbd5e0":C.blue,color:"#fff",cursor:rl>0?"not-allowed":"pointer",fontSize:14,fontWeight:800,whiteSpace:"nowrap"}}>저장 →</button>
@@ -357,7 +454,30 @@ function App(){
     if(!apiKey){setFEr1("⚙ API 키를 먼저 입력해주세요");return;}
     setFEr1("");setFLd1(true);
     const b=await toB64(file);setFImg1(b);
-    try{const d=await callV(b,P_FINAL1);if(d.name&&!fName)setFName(d.name);if(d.sn&&!fSn)setFSn(d.sn);setFExt(p=>({...p,A:d.A||{},B:d.B||{}}));}
+    try{
+      // 1차 호출: 섹션 A + 섹션 B 영어
+      setFLd1(1);
+      const d1=await callV(b,P_FINAL1A);
+      if(d1.name&&!fName)setFName(d1.name);
+      if(d1.sn&&!fSn)setFSn(d1.sn);
+      const engMap=d1.B_eng||{};
+
+      // 2차 호출: 섹션 B 한국어만 (같은 사진)
+      setFLd1(2);
+      const d2=await callV(b,P_FINAL1B);
+      const korMap=d2.B_kor||{};
+
+      // 두 결과 합쳐서 B섹션 구성: "영어|한국어"
+      const B={};
+      const allNums=new Set([...Object.keys(engMap),...Object.keys(korMap)]);
+      allNums.forEach(n=>{
+        const eng=(engMap[n]||"").trim();
+        const kor=(korMap[n]||"").trim();
+        B[n]=eng&&kor?`${eng}|${kor}`:eng||kor;
+      });
+
+      setFExt(p=>({...p,A:d1.A||{},B}));
+    }
     catch(e){setFEr1("인식 실패: "+e.message);setFImg1(null);}
     setFLd1(false);
   }
@@ -371,10 +491,10 @@ function App(){
   }
   function runFinal(){
     const k=FINAL_KEYS[fForm],r={};
-    for(let i=1;i<=25;i++)  r[i]={sec:"A",student:fExt.A?.[i]||"",correct:k.A[i],result:gradeFinal(fExt.A?.[i],k.A[i],"A")};
-    for(let i=26;i<=50;i++) r[i]={sec:"B",student:fExt.B?.[i]||"",correct:k.B[i],result:gradeFinal(fExt.B?.[i],k.B[i],"B")};
-    for(let i=51;i<=80;i++) r[i]={sec:"C",student:fExt.C?.[i]||"",correct:k.C[i],result:gradeFinal(fExt.C?.[i],k.C[i],"C")};
-    for(let i=81;i<=100;i++)r[i]={sec:"D",student:fExt.D?.[i]||"",correct:k.D[i],result:gradeFinal(fExt.D?.[i],k.D[i],"D")};
+    for(let i=1;i<=25;i++){  const g=gradeFinalWithConf(fExt.A?.[i]||"",k.A[i],"A"); r[i]={sec:"A",student:fExt.A?.[i]||"",correct:k.A[i],...g};}
+    for(let i=26;i<=50;i++){ const g=gradeFinalWithConf(fExt.B?.[i]||"",k.B[i],"B"); r[i]={sec:"B",student:fExt.B?.[i]||"",correct:k.B[i],...g};}
+    for(let i=51;i<=80;i++){ const g=gradeFinalWithConf(fExt.C?.[i]||"",k.C[i],"C"); r[i]={sec:"C",student:fExt.C?.[i]||"",correct:k.C[i],...g};}
+    for(let i=81;i<=100;i++){const g=gradeFinalWithConf(fExt.D?.[i]||"",k.D[i],"D"); r[i]={sec:"D",student:fExt.D?.[i]||"",correct:k.D[i],...g};}
     setFRes(r);setFOv({});
   }
   function fScore(){if(!fRes)return 0;let s=0;for(let i=1;i<=100;i++){const f=fOv[i]!==undefined?(fOv[i]?"correct":"wrong"):fRes[i].result;if(f==="correct")s++;}return s;}
@@ -400,12 +520,22 @@ function App(){
     setAEr("");setALd(true);
     const b=await toB64(file);setAImg(b);
     try{
-      const d=await callV(b,P_ACRONYM(acQs.length));
-      const ans=d.answers||{};
+      // 1차: 영어만
+      setALd(1);
+      const d1=await callV(b,P_ACRONYM_ENG(acQs.length));
+      const engAns=d1.answers||{};
+      // 2차: 한국어만 (같은 사진)
+      setALd(2);
+      const d2=await callV(b,P_ACRONYM_KOR(acQs.length));
+      const korAns=d2.answers||{};
+
       const r={};
       acQs.forEach(q=>{
-        const student=ans[q.no]||ans[String(q.no)]||"";
-        r[q.no]={student,q,result:gradeAcronym(student,q)};
+        const eng=(engAns[q.no]||engAns[String(q.no)]||"").trim();
+        const kor=(korAns[q.no]||korAns[String(q.no)]||"").trim();
+        const student=eng&&kor?`${eng}|${kor}`:eng||kor;
+        const g=gradeAcronymWithConf(student,q);
+        r[q.no]={student,q,...g};
       });
       setARes(r);setAOv({});
     }catch(e){setAEr("인식 실패: "+e.message);setAImg(null);}
@@ -569,19 +699,33 @@ Blank="".`;
           )}
 
           {fRes&&(<>
-            <ScoreHeader score={fSc} total={100} name={fName} sn={fSn} subtitle={`${FINAL_LABELS[fForm]} (${fForm})`} rl={fRl} onSave={saveFinal} onReset={resetFinal}/>
-            {[{label:"섹션 A — 번호 찾기",r:[1,25]},{label:"섹션 B — 약어 원형",r:[26,50]},{label:"섹션 C — 참/거짓",r:[51,80]},{label:"섹션 D — 빈칸 채우기",r:[81,100]}].map(({label,r:rng})=>{
+            <ScoreHeader score={fSc} total={100} name={fName} sn={fSn} subtitle={`${FINAL_LABELS[fForm]} (${fForm})`} rl={fRl} lowConf={Object.values(fRes||{}).filter(r=>r.result==="correct"&&r.confidence!==undefined&&r.confidence<0.75&&fOv[Object.keys(fRes).find(k=>fRes[k]===r)]===undefined).length} onSave={saveFinal} onReset={resetFinal}/>
+            {[{label:"섹션 A — 번호 찾기",r:[1,25]},{label:"섹션 B — 약어 원형",r:[26,50]},{label:"섹션 C — 참/거짓 (AI 인식 확인)",r:[51,80]},{label:"섹션 D — 빈칸 채우기",r:[81,100]}].map(({label,r:rng})=>{
               const qs=Array.from({length:rng[1]-rng[0]+1},(_,i)=>i+rng[0]);
               const cor=qs.filter(q=>(fOv[q]!==undefined?fOv[q]:fRes[q].result==="correct")).length;
               const rev=qs.filter(q=>fOv[q]===undefined&&fRes[q].result==="review").length;
+              const isSecC=rng[0]===51;
+              // 섹션C: AI 읽은 답 확인 배너
+              const cNote=isSecC?<div style={{fontSize:12,color:"#553c9a",fontWeight:700,background:"#faf5ff",border:"1px solid #e9d8fd",borderRadius:7,padding:"6px 10px",marginBottom:8}}>👁 AI가 읽은 학생 답안(T/F)을 확인하고 잘못된 경우 O/X로 수정해주세요</div>:null;
               return(
                 <div key={label} style={card}>
                   <SH label={label} right={{correct:cor,total:qs.length,rev}}/>
-                  {qs.map(q=>{
-                    const r=fRes[q];
-                    const cs=r.sec==="B"?`${r.correct[0]} / ${r.correct[1]}`:String(r.correct);
-                    return<RRow key={q} q={q} student={r.student} correct={r.correct} correctStr={cs} result={r.result} ov={fOv[q]} onOv={v=>{if(v===undefined){setFOv(p=>{const n={...p};delete n[q];return n;});}else setFOv(p=>({...p,[q]:v}));}}/>;
-                  })}
+                  {cNote}
+                  {isSecC?(
+                    // 섹션 C: 2열 그리드로 공간 절약
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
+                      {qs.map(q=>{
+                        const r=fRes[q];
+                        return<CRow key={q} q={q} student={r.student} correct={r.correct} result={r.result} ov={fOv[q]} onOv={v=>{if(v===undefined){setFOv(p=>{const n={...p};delete n[q];return n;});}else setFOv(p=>({...p,[q]:v}));}}/>;
+                      })}
+                    </div>
+                  ):(
+                    qs.map(q=>{
+                      const r=fRes[q];
+                      const cs=r.sec==="B"?`${r.correct[0]} / ${r.correct[1]}`:String(r.correct);
+                      return<RRow key={q} q={q} student={r.student} correct={r.correct} correctStr={cs} result={r.result} ov={fOv[q]} confidence={r.confidence} onOv={v=>{if(v===undefined){setFOv(p=>{const n={...p};delete n[q];return n;});}else setFOv(p=>({...p,[q]:v}));}}/>;
+                    })
+                  )}
                 </div>
               );
             })}
@@ -628,12 +772,12 @@ Blank="".`;
           <PhotoBox img={aImg} loading={aLd} count={aRes?Object.keys(aRes).length:0} label="답안지 촬영" sub={`약어 ${acQs.length}문항`} onTap={()=>aRef.current.click()} err={aEr}/>
 
           {aRes&&(<>
-            <ScoreHeader score={aSc} total={acQs.length} name={aNm} sn={aSn} subtitle={`Form ${aForm} ${aDay}`} rl={aRl} onSave={saveAcronym} onReset={resetAcronym}/>
+            <ScoreHeader score={aSc} total={acQs.length} name={aNm} sn={aSn} subtitle={`Form ${aForm} ${aDay}`} rl={aRl} lowConf={acQs.filter(q=>aRes[q.no]?.result==="correct"&&aRes[q.no]?.confidence<0.75&&aOv[q.no]===undefined).length} onSave={saveAcronym} onReset={resetAcronym}/>
             <div style={card}>
               <SH label="채점 결과" right={{correct:aSc,total:acQs.length,rev:aRl}}/>
               {acQs.map(q=>{
                 const r=aRes[q.no];
-                return<RRow key={q.no} q={q.no} student={r?.student||""} correctStr={`${q.full} / ${q.kor}`} result={r?.result||"wrong"} ov={aOv[q.no]} onOv={v=>{if(v===undefined){setAOv(p=>{const n={...p};delete n[q.no];return n;});}else setAOv(p=>({...p,[q.no]:v}));}}/>;
+                return<RRow key={q.no} q={q.no} student={r?.student||""} correctStr={`${q.full} / ${q.kor}`} result={r?.result||"wrong"} ov={aOv[q.no]} confidence={r?.confidence} onOv={v=>{if(v===undefined){setAOv(p=>{const n={...p};delete n[q.no];return n;});}else setAOv(p=>({...p,[q.no]:v}));}}/>;
               })}
             </div>
             <button onClick={saveAcronym} disabled={aRl>0} style={{background:aRl>0?"#cbd5e0":C.blue,color:"#fff",border:"none",borderRadius:10,padding:"15px",fontSize:16,fontWeight:800,cursor:aRl>0?"not-allowed":"pointer",width:"100%",opacity:aRl>0?.5:1}}>
@@ -706,7 +850,15 @@ Blank="".`;
       ══════════════════════════════════════════════ */}
       {tab==="roster"&&(
         <div style={{padding:"14px 12px"}}>
-          <div style={{fontWeight:800,fontSize:18,color:C.text,marginBottom:14}}>성적표 <span style={{color:C.muted,fontSize:15,fontWeight:600}}>({roster.length}명)</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <div style={{fontWeight:800,fontSize:18,color:C.text}}>성적표 <span style={{color:C.muted,fontSize:15,fontWeight:600}}>({roster.length}명)</span></div>
+            {roster.length>0&&(
+              <button onClick={()=>{if(window.confirm("성적표를 전체 초기화할까요?\n이 작업은 되돌릴 수 없습니다."))setRoster([]);}}
+                style={{padding:"7px 14px",borderRadius:8,border:`2px solid #fed7d7`,background:C.redL,color:C.redD,cursor:"pointer",fontSize:13,fontWeight:800}}>
+                🗑 초기화
+              </button>
+            )}
+          </div>
           {roster.length===0?(
             <div style={{textAlign:"center",padding:"60px 0",color:C.muted}}>
               <div style={{fontSize:40,marginBottom:10}}>📋</div>
